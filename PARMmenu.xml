@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menuDocument>
+    <menu>
+
+      <addScriptItem id="ie_color_picker">
+        <parent>root_menu</parent>
+        <insertBefore>revert_to_prev_val</insertBefore>
+        <label>Color Eyedropper</label>
+        <context>
+          <expression><![CDATA[
+          import eyedropper
+          return eyedropper.is_color_parm(kwargs["parms"])          
+          ]]></expression>
+        </context>    
+        <scriptCode><![CDATA[
+import eyedropper
+eyedropper.show_color_picker(kwargs["parms"][0])
+]]></scriptCode>
+      </addScriptItem>
+
+      <addScriptItem id="ie_gradient_picker">
+        <parent>root_menu</parent>
+        <insertBefore>revert_to_prev_val</insertBefore>
+        <label>Gradient Eyedropper</label>
+        <context>
+          <expression><![CDATA[
+          import eyedropper
+          return eyedropper.is_color_ramp(kwargs["parms"])          
+          ]]></expression>
+        </context>
+        <scriptCode><![CDATA[
+import eyedropper
+eyedropper.show_gradient_picker(kwargs["parms"][0])
+]]></scriptCode>
+      </addScriptItem> 
+    </menu>
+</menuDocument>
