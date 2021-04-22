@@ -1,0 +1,9 @@
+{
+    "path": "$HIPIE",
+    "load_package_once": true,
+    "env": [
+        {
+            "HIPIE": "== PATH TO PACKAGE GOES HERE  =="
+        }
+    ]
+}
