@@ -204,6 +204,7 @@ class ScreenshotView(QGraphicsView):
 
         ramp = hou.Ramp(basis, keys, values)
         self.parm.set(ramp)
+        self.parm.pressButton()
 
 
     def enterEvent(self, event):
