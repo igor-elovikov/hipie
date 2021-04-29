@@ -8,6 +8,8 @@ from PySide2.QtGui import QScreen, QPixmap, QBrush, QPen, QMouseEvent, QPainter,
 
 from PySide2.QtCore import Qt, QRect, QRectF, QPoint, QPointF
 
+import numpy as np
+
 form = None
 
 SHARP_PRECISION = 0.01
@@ -113,6 +115,8 @@ class ScreenshotView(QGraphicsView):
         self.colors = [] # type: list[QColor]
         self.picked_color = QColor()
 
+        self.disable_gamma_correction = False
+
         if self.underMouse():
             self.color_info.show()
         else:
@@ -202,6 +206,9 @@ class ScreenshotView(QGraphicsView):
             keys.append(point.attribValue(pos_attrib))
             values.append(tuple(point.position()))
 
+        if not self.disable_gamma_correction:
+            values = [np.power(v, 2.2) for v in values]
+
         ramp = hou.Ramp(basis, keys, values)
         self.parm.set(ramp)
         self.parm.pressButton()
@@ -230,6 +237,11 @@ class ScreenshotView(QGraphicsView):
         return QGraphicsView.mouseMoveEvent(self, event)
     
     def mousePressEvent(self, event):
+        modifiers = QApplication.keyboardModifiers()
+
+        if modifiers & Qt.ShiftModifier:
+            self.disable_gamma_correction = True
+
         if self.gradient_edit:
             self.draw_path = True
             self.path.moveTo(event.pos())
@@ -241,7 +253,11 @@ class ScreenshotView(QGraphicsView):
         if self.gradient_edit and self.draw_path:
             self.write_color_ramp()
         elif not self.gradient_edit:
-            self.parm.set(hou.qt.fromQColor(self.picked_color)[0].rgb())
+            out_color = hou.qt.fromQColor(self.picked_color)[0].rgb()
+            if not self.disable_gamma_correction:
+                out_color = np.power(out_color, 2.2)
+
+            self.parm.set(out_color)
 
         if self.parent() is not None:
             self.parent().mouseReleaseEvent(event)
@@ -299,7 +315,9 @@ class ScreensMain(QMainWindow):
         self.close_all()
 
     def keyPressEvent(self, event):
-        self.close_all()
+        modifiers = event.modifiers()
+        if not modifiers & Qt.ShiftModifier:
+            self.close_all()
 
 
 def show_color_picker(parm):
