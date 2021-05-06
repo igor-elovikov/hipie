@@ -2,6 +2,7 @@
 <menuDocument>
     <menu>
 
+
       <addScriptItem id="ie_color_picker">
         <parent>root_menu</parent>
         <insertBefore>revert_to_prev_val</insertBefore>
@@ -18,6 +19,7 @@ eyedropper.show_color_picker(kwargs["parms"][0])
 ]]></scriptCode>
       </addScriptItem>
 
+
       <addScriptItem id="ie_gradient_picker">
         <parent>root_menu</parent>
         <insertBefore>revert_to_prev_val</insertBefore>
@@ -33,5 +35,24 @@ import eyedropper
 eyedropper.show_gradient_picker(kwargs["parms"][0])
 ]]></scriptCode>
       </addScriptItem> 
+
+
+      <addScriptItem id="ie_ramp_sketch">
+        <parent>root_menu</parent>
+        <insertBefore>revert_to_prev_val</insertBefore>
+        <label>Ramp Sketch</label>
+        <context>
+          <expression><![CDATA[
+          import eyedropper
+          return eyedropper.is_float_ramp(kwargs["parms"])          
+          ]]></expression>
+        </context>
+        <scriptCode><![CDATA[
+import eyedropper
+eyedropper.show_ramp_sketch(kwargs["parms"][0])
+]]></scriptCode>
+      </addScriptItem> 
+
+
     </menu>
 </menuDocument>

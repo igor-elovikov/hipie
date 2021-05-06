@@ -40,6 +40,17 @@ def is_color_parm(parms):
     
     return False
 
+def is_float_ramp(parms):
+    if not parms:
+        return False
+    parm = parms[0] # type: hou.Parm
+    parm_template = parm.parmTemplate() # type: hou.ParmTemplate
+
+    if parm_template.type() == hou.parmTemplateType.Ramp and parm_template.parmType() == hou.rampParmType.Float:
+        return True
+    
+    return False
+
 
 class ColorInformation(QGraphicsItem):
     def __init__(self, parent=None):
@@ -72,7 +83,7 @@ class ColorInformation(QGraphicsItem):
         painter.drawText(50, 80, "B: "+str(self.color.blue()))
 
 class ScreenshotView(QGraphicsView):
-    def __init__(self, parent, screen, parm, gradient_edit):
+    def __init__(self, parent, screen, parm, gradient_edit, ramp_sketch):
         super(ScreenshotView, self).__init__(parent)
 
         self.scene = QGraphicsScene(parent)
@@ -104,15 +115,20 @@ class ScreenshotView(QGraphicsView):
         self.scene.addItem(self.color_info)
 
         self.gradient_edit = gradient_edit
+        self.ramp_sketch = ramp_sketch
 
         self.path = QPainterPath()
         self.draw_path = False
 
         self.path_item = QGraphicsPathItem()
-        self.path_item.setPen(QPen(QColor(0, 200, 100, 200), 2))
+        if not self.ramp_sketch:
+            self.path_item.setPen(QPen(QColor(0, 200, 100, 200), 2))
+        else:
+            self.path_item.setPen(QPen(QColor(200, 200, 50, 255), 4))
         self.scene.addItem(self.path_item)
 
         self.colors = [] # type: list[QColor]
+        self.positions = [] # type: list[QPoint]
         self.picked_color = QColor()
 
         self.disable_gamma_correction = False
@@ -128,12 +144,81 @@ class ScreenshotView(QGraphicsView):
         if self.is_macos:
             self.color_info.show()
 
+        if self.ramp_sketch:
+            self.color_info.hide()
+
     def update_info(self, pos):
         image_pos = pos * self.screen.devicePixelRatio()
         if self.screen_image.rect().contains(image_pos):
             self.color_info.color = QColor(self.screen_image.pixel(image_pos.x(), image_pos.y()))
         self.color_info.setPos(pos)
-        self.color_info.pos = pos  
+        self.color_info.pos = pos
+
+    def write_ramp_sketch(self):
+        if len(self.positions) < 2:
+            return
+
+        positions = np.array([
+            (float(p.x()), float(-p.y())) 
+            for p in self.positions
+        ]) 
+
+        min_point = positions.min(axis=0)
+        max_point = positions.max(axis=0)
+
+        ramp_range = max_point - min_point
+
+        if not np.any((ramp_range == 0.0)):
+            norm_positions = (positions - min_point) / ramp_range
+
+            geo_points = []
+            geo_points.append(hou.Vector3(norm_positions[0][0], norm_positions[0][1], 0.0))
+            left = 0.0
+            for pt in norm_positions[1:-1]:
+                if pt[0] >= left:
+                    left = pt[0]
+                    geo_points.append(hou.Vector3(pt[0], pt[1], 0.0))
+                
+            geo_points.append(hou.Vector3(norm_positions[-1][0], norm_positions[-1][1], 0.0))
+
+            ramp_geo = hou.Geometry() # type: hou.Geometry
+            ramp_points = ramp_geo.createPoints(geo_points)
+            ramp_geo.createPolygons((ramp_points,), False)
+
+            resample_verb = hou.sopNodeTypeCategory().nodeVerb("resample") # type: hou.SopVerb
+            resample_verb.setParms({
+                "length": 0.04
+            })
+
+            resample_verb.execute(ramp_geo, [ramp_geo])
+
+            facet_verb = hou.sopNodeTypeCategory().nodeVerb("facet") # type: hou.SopVerb
+            facet_verb.setParms({
+                "inline": 1,
+                "inlinedist": 0.003
+            })
+
+            facet_verb.execute(ramp_geo, [ramp_geo])
+
+            ramp_poly = ramp_geo.prim(0)
+            ramp_points = ramp_poly.points()
+
+            ramp_basis = hou.rampBasis.BSpline if self.disable_gamma_correction else hou.rampBasis.Linear
+
+            basis = []
+            keys = []
+            values = []
+
+            for point in ramp_points: # type: hou.Point
+                basis.append(ramp_basis)
+                pos = point.position()
+                keys.append(pos.x())
+                values.append(pos.y())
+
+            ramp = hou.Ramp(basis, keys, values)
+            self.parm.set(ramp)
+            self.parm.pressButton()
+        
 
     def write_color_ramp(self):
         if len(self.colors) < 2:
@@ -215,7 +300,8 @@ class ScreenshotView(QGraphicsView):
 
 
     def enterEvent(self, event):
-        self.color_info.show()
+        if not self.ramp_sketch:
+            self.color_info.show()
     
     def leaveEvent(self, event):
         self.color_info.hide()
@@ -225,7 +311,7 @@ class ScreenshotView(QGraphicsView):
         self.update_info(pos)
 
         # TODO: ???
-        if self.is_macos:
+        if self.is_macos and not self.ramp_sketch:
             self.color_info.show()
 
         if self.draw_path:
@@ -233,6 +319,7 @@ class ScreenshotView(QGraphicsView):
             path.lineTo(pos)
             self.path_item.setPath(path)
             self.colors.append(self.color_info.color)
+            self.positions.append(pos)
 
         return QGraphicsView.mouseMoveEvent(self, event)
     
@@ -242,7 +329,7 @@ class ScreenshotView(QGraphicsView):
         if modifiers & Qt.ShiftModifier:
             self.disable_gamma_correction = True
 
-        if self.gradient_edit:
+        if self.gradient_edit or self.ramp_sketch:
             self.draw_path = True
             self.path.moveTo(event.pos())
             self.path_item.setPath(self.path)
@@ -252,6 +339,8 @@ class ScreenshotView(QGraphicsView):
     def mouseReleaseEvent(self, event):
         if self.gradient_edit and self.draw_path:
             self.write_color_ramp()
+        elif self.ramp_sketch and self.draw_path:
+            self.write_ramp_sketch()
         elif not self.gradient_edit:
             out_color = hou.qt.fromQColor(self.picked_color)[0].rgb()
             if not self.disable_gamma_correction:
@@ -263,7 +352,7 @@ class ScreenshotView(QGraphicsView):
             self.parent().mouseReleaseEvent(event)
 
 class ScreensMain(QMainWindow):
-    def __init__(self, parm, gradient_edit, parent=None, screen=None):
+    def __init__(self, parm, gradient_edit, ramp_sketch, parent=None, screen=None):
         super(ScreensMain, self).__init__(parent)
 
         app = QApplication.instance() # type: QApplication
@@ -272,7 +361,7 @@ class ScreensMain(QMainWindow):
 
         screen_to_attach = screens[0] if screen is None else screen
 
-        view = ScreenshotView(self, screen_to_attach, parm, gradient_edit)
+        view = ScreenshotView(self, screen_to_attach, parm, gradient_edit, ramp_sketch)
         self.view = view
         self.setWindowFlag(Qt.WindowStaysOnTopHint)
         self.setWindowFlag(Qt.FramelessWindowHint)
@@ -287,14 +376,14 @@ class ScreensMain(QMainWindow):
         cursor = hou.qt.getCursor("cross")
         self.setCursor(cursor)
 
-        if screen_to_attach.geometry().contains(cursor_pos):
+        if screen_to_attach.geometry().contains(cursor_pos) and not ramp_sketch:
             view.color_info.show()
         else:
             view.color_info.hide()        
 
         if screen is None:
             for screen in screens[1:]:
-                additional_window = ScreensMain(parm, gradient_edit, self, screen)
+                additional_window = ScreensMain(parm, gradient_edit, ramp_sketch, self, screen)
                 self.additional_windows.append(additional_window)
 
     def close_all(self):
@@ -324,10 +413,15 @@ def show_color_picker(parm):
     parm_tuple = parm.tuple()
     if parm_tuple is not None:
         global form
-        form = ScreensMain(parm_tuple, False)
+        form = ScreensMain(parm_tuple, False, False)
         form.show()
 
 def show_gradient_picker(parm):
     global form
-    form = ScreensMain(parm, True)
+    form = ScreensMain(parm, True, False)
+    form.show()
+
+def show_ramp_sketch(parm):
+    global form
+    form = ScreensMain(parm, False, True)
     form.show()
