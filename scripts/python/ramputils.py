@@ -34,16 +34,148 @@ ParametricSpareParm = namedtuple("ParametricSpareParm", "name label default_valu
 ParametricRamp = namedtuple("ParametricRamp", "spare_parms callback num_keys")
 
 bias_callback = """
-k = 1.0 - bias
-v = bias
-node.parm(ramp_name+"2pos").set(k)
-node.parm(ramp_name+"2value").set(v)
-node.parm(ramp_name+"3pos").set(k)
-node.parm(ramp_name+"3value").set(v)
+\tk = 1.0 - bias
+\tv = bias
+\tnode.parm(ramp_name+"2pos").set(k)
+\tnode.parm(ramp_name+"2value").set(v)
+\tnode.parm(ramp_name+"3pos").set(k)
+\tnode.parm(ramp_name+"3value").set(v)
 """
 
+gain_callback = """
+\tk1 = 0.5 - gain * 0.5
+\tv1 = gain * 0.5
+\tk2 = 0.5 + gain * 0.5
+\tv2 = 1.0 - gain * 0.5
+\t
+\tnode.parm(ramp_name+"2pos").set(k1)
+\tnode.parm(ramp_name+"2value").set(v1)
+\tnode.parm(ramp_name+"3pos").set(k1)
+\tnode.parm(ramp_name+"3value").set(v1)
+\t
+\tnode.parm(ramp_name+"5pos").set(k2)
+\tnode.parm(ramp_name+"5value").set(v2)
+\tnode.parm(ramp_name+"6pos").set(k2)
+\tnode.parm(ramp_name+"6value").set(v2)
+"""
+
+easein_callback = """
+\tk = easein
+\tv = 0.0
+\tnode.parm(ramp_name+"2pos").set(k)
+\tnode.parm(ramp_name+"2value").set(v)
+\tnode.parm(ramp_name+"3pos").set(k)
+\tnode.parm(ramp_name+"3value").set(v)
+"""
+
+easeout_callback = """
+\tk = 1.0 - easeout
+\tv = 1.0
+\tnode.parm(ramp_name+"2pos").set(k)
+\tnode.parm(ramp_name+"2value").set(v)
+\tnode.parm(ramp_name+"3pos").set(k)
+\tnode.parm(ramp_name+"3value").set(v)
+"""
+
+smoothstep_callback = """
+\td = min(center, 1.0 - center) * slope
+\tk1 = center - d
+\tk2 = center + d
+\t
+\tnode.parm(ramp_name+"2pos").set(k1)
+\tnode.parm(ramp_name+"2value").set(0.0)
+\tnode.parm(ramp_name+"3pos").set(k1)
+\tnode.parm(ramp_name+"3value").set(0.0)
+\t
+\tnode.parm(ramp_name+"5pos").set(k2)
+\tnode.parm(ramp_name+"5value").set(1.0)
+\tnode.parm(ramp_name+"6pos").set(k2)
+\tnode.parm(ramp_name+"6value").set(1.0)
+\t
+\tnode.parm(ramp_name+"4pos").set(center)
+\tnode.parm(ramp_name+"4value").set(0.5)
+"""
+
+bell_callback = """
+\twidth = 0.0001 if width < 0.0001 else width
+\td = min(center, 1.0 - center) * width
+\tk1 = center - d
+\tk2 = center + d
+\t
+\tnode.parm(ramp_name+"2pos").set(k1-0.0001)
+\tnode.parm(ramp_name+"2value").set(0.0)
+\tnode.parm(ramp_name+"3pos").set(k1+0.0001)
+\tnode.parm(ramp_name+"3value").set(1.0)
+\t
+\tnode.parm(ramp_name+"5pos").set(k2-0.0001)
+\tnode.parm(ramp_name+"5value").set(1.0)
+\tnode.parm(ramp_name+"6pos").set(k2+0.0001)
+\tnode.parm(ramp_name+"6value").set(0.0)
+\t
+\tnode.parm(ramp_name+"4pos").set(center)
+\tnode.parm(ramp_name+"4value").set(1.0)
+\tnode.parm(ramp_name+"7value").set(0.0)
+"""
+
+bounce_callback = """
+\twidth = 0.0001 if width < 0.0001 else width
+\tk1 = center - center * width
+\tk2 = center + (1.0 - center) * width
+\t
+\tnode.parm(ramp_name+"2pos").set(0.0)
+\tnode.parm(ramp_name+"2value").set(speed)
+\tnode.parm(ramp_name+"3pos").set(k1+0.0001)
+\tnode.parm(ramp_name+"3value").set(1.0)
+\t
+\tnode.parm(ramp_name+"5pos").set(k2-0.0001)
+\tnode.parm(ramp_name+"5value").set(1.0)
+\tnode.parm(ramp_name+"6pos").set(1.0)
+\tnode.parm(ramp_name+"6value").set(speed)
+\t
+\tnode.parm(ramp_name+"4pos").set(center)
+\tnode.parm(ramp_name+"4value").set(1.0)
+\tnode.parm(ramp_name+"7value").set(0.0)
+"""
+
+pulse_callback = """
+\twidth = 0.0001 if width < 0.0001 else width
+\td = min(center, 1.0 - center) * width
+\tk1 = center - d
+\tk2 = center + d
+\t
+\tnode.parm(ramp_name+"2pos").set(k1-0.0001)
+\tnode.parm(ramp_name+"2value").set(0.0)
+\tnode.parm(ramp_name+"3pos").set(k1+0.0001)
+\tnode.parm(ramp_name+"3value").set(0.0)
+\t
+\tnode.parm(ramp_name+"5pos").set(k2-0.0001)
+\tnode.parm(ramp_name+"5value").set(0.0)
+\tnode.parm(ramp_name+"6pos").set(k2+0.0001)
+\tnode.parm(ramp_name+"6value").set(0.0)
+\t
+\tnode.parm(ramp_name+"4pos").set(center)
+\tnode.parm(ramp_name+"4value").set(1.0)
+\tnode.parm(ramp_name+"7value").set(0.0)
+"""
+
+
 parametric_ramps = {
-    "Bias": ParametricRamp((ParametricSpareParm("bias", "Bias", 0.5),), bias_callback, 4)
+    "Bias": ParametricRamp((ParametricSpareParm("bias", "Bias", 0.5),), bias_callback, 4),
+    "EaseIn": ParametricRamp((ParametricSpareParm("easein", "Ease In", 0.5),), easein_callback, 4),
+    "EaseOut": ParametricRamp((ParametricSpareParm("easeout", "Ease Out", 0.5),), easeout_callback, 4),
+    "Gain": ParametricRamp((ParametricSpareParm("gain", "Gain", 0.5),), gain_callback, 7),
+    "Smoothstep": ParametricRamp(
+        (ParametricSpareParm("slope", "Slope", 0.5), ParametricSpareParm("center", "Center", 0.5)), 
+        smoothstep_callback, 7),
+    "Bell": ParametricRamp(
+        (ParametricSpareParm("width", "Width", 0.5), ParametricSpareParm("center", "Center", 0.5)), 
+        bell_callback, 7),
+    "Bounce": ParametricRamp(
+        (ParametricSpareParm("width", "Width", 0.5), ParametricSpareParm("speed", "Speed", 0.5), ParametricSpareParm("center", "Center", 0.5)), 
+        bounce_callback, 7),
+    "Pulse": ParametricRamp(
+        (ParametricSpareParm("width", "Width", 0.5), ParametricSpareParm("center", "Center", 0.5)), 
+        pulse_callback, 7),
 }
 
 def setup_parametric_ramp(node, ramp_parm, parametric_ramp_type):
@@ -62,9 +194,13 @@ def setup_parametric_ramp(node, ramp_parm, parametric_ramp_type):
 
     callback = "node = kwargs['node']\n"
     callback += "ramp_name = '{}'\n".format(ramp_name)
+    callback += """
+ramp = node.parm(ramp_name)
+if not (ramp is None or ramp.evalAsInt() < {}):
+""".format(parametric_ramp.num_keys)
 
     for parm in spare_parms: # type: ParametricSpareParm
-        callback += "{} = node.parm('{}').eval()\n".format(parm.name, name_prefix + parm.name)
+        callback += "\t{} = node.parm('{}').eval()\n".format(parm.name, name_prefix + parm.name)
 
     callback += parametric_ramp.callback
 
@@ -84,7 +220,7 @@ def setup_parametric_ramp(node, ramp_parm, parametric_ramp_type):
     for parm in spare_parms: # type: ParametricSpareParm
         parm_template = hou.FloatParmTemplate(
             name_prefix + parm.name,
-            label_format.format(ramp_name, parm.label),
+            label_format.format(ramp_parm.description(), parm.label),
             1,
             (parm.default_value,),
             min=0.0, max=1.0,

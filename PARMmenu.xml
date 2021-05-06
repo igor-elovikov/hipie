@@ -54,5 +54,109 @@ eyedropper.show_ramp_sketch(kwargs["parms"][0])
       </addScriptItem> 
 
 
+<!-- Parametric Ramps Menu -->
+    <subMenu id="ie_parametric_ramp_menu">
+
+
+            <label>Setup Parametric Ramp</label>
+            <context>
+              <expression><![CDATA[
+            import eyedropper
+            return eyedropper.is_float_ramp(kwargs["parms"])          
+            ]]></expression>
+            </context>
+            <scriptItem id="ie_parametric_ramp_reset">
+                <label>Remove Parameters</label>
+                <scriptCode><![CDATA[
+import ramputils
+ramputils.clean_parametric_spare_parms(kwargs["parms"][0].node(), kwargs["parms"][0])
+]]></scriptCode>
+            </scriptItem>  
+            
+
+            <scriptItem id="ie_parametric_ramp_smoothstep">
+                <label>Smooth Step</label>
+                <context>
+                </context>
+                <scriptCode><![CDATA[
+import ramputils
+ramputils.setup_parametric_ramp(kwargs["parms"][0].node(), kwargs["parms"][0], "Smoothstep")
+]]></scriptCode>
+            </scriptItem>
+
+            <scriptItem id="ie_parametric_ramp_easein">
+                <label>Ease In</label>
+                <context>
+                </context>
+                <scriptCode><![CDATA[
+import ramputils
+ramputils.setup_parametric_ramp(kwargs["parms"][0].node(), kwargs["parms"][0], "EaseIn")
+]]></scriptCode>
+            </scriptItem>
+
+            <scriptItem id="ie_parametric_ramp_easeout">
+                <label>Ease Out</label>
+                <context>
+                </context>
+                <scriptCode><![CDATA[
+import ramputils
+ramputils.setup_parametric_ramp(kwargs["parms"][0].node(), kwargs["parms"][0], "EaseOut")
+]]></scriptCode>
+            </scriptItem>
+
+            <scriptItem id="ie_parametric_ramp_bias">
+                <label>Bias</label>
+                <context>
+                </context>
+                <scriptCode><![CDATA[
+import ramputils
+ramputils.setup_parametric_ramp(kwargs["parms"][0].node(), kwargs["parms"][0], "Bias")
+]]></scriptCode>
+            </scriptItem>
+
+
+            <scriptItem id="ie_parametric_ramp_gain">
+                <label>Gain</label>
+                <context>
+                </context>
+                <scriptCode><![CDATA[
+import ramputils
+ramputils.setup_parametric_ramp(kwargs["parms"][0].node(), kwargs["parms"][0], "Gain")
+]]></scriptCode>
+            </scriptItem>
+
+            <scriptItem id="ie_parametric_ramp_bell">
+                <label>Bell</label>
+                <context>
+                </context>
+                <scriptCode><![CDATA[
+import ramputils
+ramputils.setup_parametric_ramp(kwargs["parms"][0].node(), kwargs["parms"][0], "Bell")
+]]></scriptCode>
+            </scriptItem>
+
+            <scriptItem id="ie_parametric_ramp_bounce">
+                <label>Bounce</label>
+                <context>
+                </context>
+                <scriptCode><![CDATA[
+import ramputils
+ramputils.setup_parametric_ramp(kwargs["parms"][0].node(), kwargs["parms"][0], "Bounce")
+]]></scriptCode>
+            </scriptItem>
+
+            <scriptItem id="ie_parametric_ramp_pulse">
+                <label>Pulse</label>
+                <context>
+                </context>
+                <scriptCode><![CDATA[
+import ramputils
+ramputils.setup_parametric_ramp(kwargs["parms"][0].node(), kwargs["parms"][0], "Pulse")
+]]></scriptCode>
+            </scriptItem>
+
+
+    </subMenu>
+
     </menu>
 </menuDocument>
