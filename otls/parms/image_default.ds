@@ -1,0 +1,38 @@
+{
+    name	selectedparms
+
+    parm {
+        name    "input_name"
+        label   "Name"
+        type    string
+        default { "`prims(0, 0, \"name\")`" }
+        menureplace {
+            [ "import imageutils" ]
+            [ "return imageutils.generate_image_menu(kwargs[\"node\"])" ]
+            language python
+        }
+        parmtag { "script_callback" "" }
+        parmtag { "script_callback_language" "python" }
+    }
+    parm {
+        name    "output_name"
+        label   "Output"
+        type    string
+        default { "output" }
+        menureplace {
+            [ "import imageutils" ]
+            [ "return imageutils.generate_image_menu(kwargs[\"node\"])" ]
+            language python
+        }
+        parmtag { "script_callback" "" }
+        parmtag { "script_callback_language" "python" }
+    }
+    parm {
+        name    "inplace"
+        label   "In-Place Version (For Compiled Blocks)"
+        type    toggle
+        default { "off" }
+        parmtag { "script_callback_language" "python" }
+    }
+
+}
