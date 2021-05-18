@@ -30,12 +30,30 @@ def get_vector_volumes(volumes):
 
     return vector_volumes
                     
-
-
-def generate_image_menu(node):
-    # type: (hou.SopNode) -> List[str]
+def first_vector_volume(node):
+    # type: (hou.SopNode) -> str
 
     node_input = node.input(0) # type: hou.SopNode
+
+    if node_input is not None:
+
+        input_geo = node_input.geometry() # type: hou.Geometry
+        input_volumes = get_geo_volumes(input_geo)
+
+        if input_volumes:
+            vector_volumes = get_vector_volumes(input_volumes)
+            
+            if vector_volumes:
+                return vector_volumes[0]
+    
+    return ""
+
+
+
+def generate_image_menu(node, input_index=0):
+    # type: (hou.SopNode) -> List[str]
+
+    node_input = node.input(input_index) # type: hou.SopNode
     
     if node_input is not None:
 
@@ -72,9 +90,9 @@ def generate_image_menu(node):
 
     return []
                 
-def generate_group_from_name(node, name):
+def generate_group_from_name(node, name, input_index=0):
     # type: (hou.SopNode) -> str
-    node_input = node.input(0) # type: hou.SopNode
+    node_input = node.input(input_index) # type: hou.SopNode
     
     if node_input is not None:
 
@@ -93,9 +111,9 @@ def generate_group_from_name(node, name):
     
     return ""
 
-def prim_from_name(node, name):
+def prim_from_name(node, name, input_index=0):
     # type: (hou.SopNode) -> int
-    node_input = node.input(0) # type: hou.SopNode
+    node_input = node.input(input_index) # type: hou.SopNode
     
     if node_input is not None:
 
