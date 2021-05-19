@@ -2,6 +2,21 @@ import hou
 import numpy as np
 from collections import namedtuple
 
+def update_float_from_color(node, color_parm, float_names):
+    parent = color_parm.parentMultiParm()
+    color_parm = parent if parent is not None else color_parm
+
+    color_ramp = color_parm.eval() # type: hou.Ramp
+    basis = color_ramp.basis()
+    keys = color_ramp.keys()
+    values = color_ramp.values()
+
+    for idx in range(3):
+        color_ramp_comp = hou.Ramp(basis, keys, tuple(v[idx] for v in values))
+        linked_ramp = node.parm(float_names[idx])
+        linked_ramp.set(color_ramp_comp)
+    
+
 name_prefix_format = "__{}_ctrl_"
 label_format = "{}: {}"
 
