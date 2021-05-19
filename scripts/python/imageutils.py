@@ -30,10 +30,10 @@ def get_vector_volumes(volumes):
 
     return vector_volumes
                     
-def first_vector_volume(node):
+def first_vector_volume(node, input_index=0):
     # type: (hou.SopNode) -> str
 
-    node_input = node.input(0) # type: hou.SopNode
+    node_input = node.input(input_index) # type: hou.SopNode
 
     if node_input is not None:
 
