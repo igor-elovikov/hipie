@@ -1,3 +1,6 @@
+#ifdef __ie_utils_h
+#define __ie_utils_h
+
 #define INTERSECT_TOLERANCE 0.00001f
 
 
@@ -5,16 +8,18 @@
 
 static float3 fmod3r(float3 lhs, float3 rhs)
 {
-    float3 md = fmod(lhs, rhs);
-    return step(1.f, -sign(md)) * rhs + md;  
+    return lhs - floor(lhs / rhs);  
 }
 
 static float2 fmod2r(float2 lhs, float2 rhs)
 {
-    float2 md = fmod(lhs, rhs);
-    return step(1.f, -sign(md)) * rhs + md;  
+    return lhs - floor(lhs / rhs); 
 }
 
+static float fmodr(float lhs, float rhs)
+{
+    return lhs - floor(lhs / rhs); 
+}
 
 static bool tri_intersect(float3 ray_origin, float3 ray_direction,
                 float3 p0, float3 p1, float3 p2,
@@ -50,3 +55,5 @@ name##_z[idx] = value.z;
 
 #define vdb_sample(name, pos) cnanovdb_sampleF(name##_grid, &name##_acc, pos)
 #define vdb_samplev(name, pos) cnanovdb_sampleV(name##_grid, &name##_acc, pos)
+
+#endif
