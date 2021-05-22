@@ -1,4 +1,4 @@
-#ifdef __ie_utils_h
+#ifndef __ie_utils_h
 #define __ie_utils_h
 
 #define INTERSECT_TOLERANCE 0.00001f
@@ -20,6 +20,32 @@ static float fmodr(float lhs, float rhs)
 {
     return lhs - floor(lhs / rhs); 
 }
+
+
+static int imodr(int lhs, int rhs)
+{
+    return mod < 0 ? rhs + mod : mod;
+}
+
+static int2 imod2r(int2 lhs, int2 rhs)
+{
+    int2 mod = lhs % rhs;
+    return (int2) (
+        mod.x < 0 ? rhs.x + mod.x : mod.x,
+        mod.y < 0 ? rhs.y + mod.y : mod.y
+    );
+}
+
+static int3 imod3r(int3 lhs, int3 rhs)
+{
+    int3 mod = lhs % rhs;
+    return (int3) (
+        mod.x < 0 ? rhs.x + mod.x : mod.x,
+        mod.y < 0 ? rhs.y + mod.y : mod.y,
+        mod.z < 0 ? rhs.z + mod.z : mod.z
+    );
+}
+
 
 static bool tri_intersect(float3 ray_origin, float3 ray_direction,
                 float3 p0, float3 p1, float3 p2,
