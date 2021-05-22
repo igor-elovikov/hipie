@@ -24,6 +24,7 @@ static float fmodr(float lhs, float rhs)
 
 static int imodr(int lhs, int rhs)
 {
+    int mod = lhs % rhs;
     return mod < 0 ? rhs + mod : mod;
 }
 
