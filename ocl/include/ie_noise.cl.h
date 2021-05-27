@@ -23,34 +23,34 @@ static float minkowski_dist(float3 p, float mp)
 
 // hash wrappers
 
-inline float3 hash_3_3(float3 v)
+static float3 hash_3_3(float3 v)
 {
     return VEXrandom_3_3(v.x, v.y, v.z);
 }
 
-inline float4 hash_3_4(float3 v)
+static float4 hash_3_4(float3 v) 
 {
     return VEXrandom_3_4(v.x, v.y, v.z);
 }
 
-inline float hash_3_1(float3 v)
+static float hash_3_1(float3 v)
 {
     return VEXrandom_3_1(v.x, v.y, v.z);
 }
 
 // zero-centered hashes
 
-inline float3 zchash_3_3(float3 v)
+static float3 zchash_3_3(float3 v)
 {
     return VEXrandom_3_3(v.x, v.y, v.z) * 2.f - 1.f;
 }
 
-inline float4 zchash_3_4(float3 v) * 2.f - 1.f;
+static float4 zchash_3_4(float3 v)
 {
     return VEXrandom_3_4(v.x, v.y, v.z) * 2.f - 1.f;
 }
 
-inline float zchash_3_1(float3 v)
+static float zchash_3_1(float3 v)
 {
     return VEXrandom_3_1(v.x, v.y, v.z) * 2.f - 1.f;
 }
@@ -80,7 +80,7 @@ static void vnoise3(float3 pos, float jitter, float* cell_value,
             {
                 float3 offset = (float3)(x, y, z);
                 float3 hc = id + offset;
-                float3 h = (VEXrandom_3_3(hc.x, hc.y, hc.z) - half_one) * jitter + half_one;
+                float3 h = (hash_3_3(hc) - half_one) * jitter + half_one;
                 h += offset;
 
                 float3 d = p - h;
@@ -90,7 +90,7 @@ static void vnoise3(float3 pos, float jitter, float* cell_value,
                 bool pass2 = dist < F2;
 
 
-                cell = pass ? VEXrandom_3_1(hc.x, hc.y, hc.z) : cell;                
+                cell = pass ? hash_3_1(hc) : cell;                
                 F2 = pass2 ? dist : F2;
                 F2 = pass ? F1 : F2;
                 F1 = pass ? dist : F1;
@@ -104,8 +104,8 @@ static void vnoise3(float3 pos, float jitter, float* cell_value,
 
     (*f1) = F1;
     (*f2) = F2;
-    (*p1) = pos1 / fperiod;
-    (*p2) = pos2 / fperiod;
+    (*p1) = pos1 ;
+    (*p2) = pos2 ;
     (*cell_value) = cell;
 }
 
@@ -132,7 +132,7 @@ static void mvnoise3(float3 pos, float jitter, float* cell_value,
             {
                 float3 offset = (float3)(x, y, z);
                 float3 hc = id + offset;
-                float3 h = (VEXrandom_3_3(hc.x, hc.y, hc.z) - half_one) * jitter + half_one;
+                float3 h = (hash_3_3(hc) - half_one) * jitter + half_one;
                 h += offset;
 
                 float3 d = p - h;
@@ -142,7 +142,7 @@ static void mvnoise3(float3 pos, float jitter, float* cell_value,
                 bool pass2 = dist < F2;
 
 
-                cell = pass ? VEXrandom_3_1(hc.x, hc.y, hc.z) : cell;                
+                cell = pass ? hash_3_1(hc) : cell;                
                 F2 = pass2 ? dist : F2;
                 F2 = pass ? F1 : F2;
                 F1 = pass ? dist : F1;
@@ -156,8 +156,8 @@ static void mvnoise3(float3 pos, float jitter, float* cell_value,
 
     (*f1) = F1;
     (*f2) = F2;
-    (*p1) = pos1 / fperiod;
-    (*p2) = pos2 / fperiod;
+    (*p1) = pos1 ;
+    (*p2) = pos2 ;
     (*cell_value) = cell;
 }
 
@@ -184,7 +184,7 @@ static void cvnoise3(float3 pos, float jitter, float* cell_value,
             {
                 float3 offset = (float3)(x, y, z);
                 float3 hc = id + offset;
-                float3 h = (VEXrandom_3_3(hc.x, hc.y, hc.z) - half_one) * jitter + half_one;
+                float3 h = (hash_3_3(hc) - half_one) * jitter + half_one;
                 h += offset;
 
                 float3 d = p - h;
@@ -194,7 +194,7 @@ static void cvnoise3(float3 pos, float jitter, float* cell_value,
                 bool pass2 = dist < F2;
 
 
-                cell = pass ? VEXrandom_3_1(hc.x, hc.y, hc.z) : cell;                
+                cell = pass ? hash_3_1(hc) : cell;                
                 F2 = pass2 ? dist : F2;
                 F2 = pass ? F1 : F2;
                 F1 = pass ? dist : F1;
@@ -208,8 +208,8 @@ static void cvnoise3(float3 pos, float jitter, float* cell_value,
 
     (*f1) = F1;
     (*f2) = F2;
-    (*p1) = pos1 / fperiod;
-    (*p2) = pos2 / fperiod;
+    (*p1) = pos1 ;
+    (*p2) = pos2 ;
     (*cell_value) = cell;
 }
 
@@ -237,17 +237,17 @@ static void mkvnoise3(float3 pos, float jitter, float* cell_value,
             {
                 float3 offset = (float3)(x, y, z);
                 float3 hc = id + offset;
-                float3 h = (VEXrandom_3_3(hc.x, hc.y, hc.z) - half_one) * jitter + half_one;
+                float3 h = (hash_3_3(hc) - half_one) * jitter + half_one;
                 h += offset;
 
                 float3 d = p - h;
-                float dist = minkowski_dist(d, minkowski_number));
+                float dist = minkowski_dist(d, minkowski_number);
 
                 bool pass = dist < F1;
                 bool pass2 = dist < F2;
 
 
-                cell = pass ? VEXrandom_3_1(hc.x, hc.y, hc.z) : cell;                
+                cell = pass ? hash_3_1(hc) : cell;                
                 F2 = pass2 ? dist : F2;
                 F2 = pass ? F1 : F2;
                 F1 = pass ? dist : F1;
@@ -261,8 +261,8 @@ static void mkvnoise3(float3 pos, float jitter, float* cell_value,
 
     (*f1) = F1;
     (*f2) = F2;
-    (*p1) = pos1 / fperiod;
-    (*p2) = pos2 / fperiod;
+    (*p1) = pos1 ;
+    (*p2) = pos2 ;
     (*cell_value) = cell;
 }
 
@@ -292,7 +292,7 @@ static void pvnoise3(float3 pos, float jitter, float* cell_value,
             {
                 float3 offset = (float3)(x, y, z);
                 float3 hc = fmod3r((id + offset), fperiod);
-                float3 h = (VEXrandom_3_3(hc.x, hc.y, hc.z) - half_one) * jitter + half_one;
+                float3 h = (hash_3_3(hc) - half_one) * jitter + half_one;
                 h += offset;
 
                 float3 d = p - h;
@@ -302,7 +302,7 @@ static void pvnoise3(float3 pos, float jitter, float* cell_value,
                 bool pass2 = dist < F2;
 
 
-                cell = pass ? VEXrandom_3_1(hc.x, hc.y, hc.z) : cell;                
+                cell = pass ? hash_3_1(hc) : cell;                
                 F2 = pass2 ? dist : F2;
                 F2 = pass ? F1 : F2;
                 F1 = pass ? dist : F1;
@@ -316,8 +316,8 @@ static void pvnoise3(float3 pos, float jitter, float* cell_value,
 
     (*f1) = F1;
     (*f2) = F2;
-    (*p1) = pos1 / fperiod;
-    (*p2) = pos2 / fperiod;
+    (*p1) = pos1  / fperiod;
+    (*p2) = pos2  / fperiod;
     (*cell_value) = cell;
 }
 
@@ -347,7 +347,7 @@ static void pmvnoise3(float3 pos, float jitter, float* cell_value,
             {
                 float3 offset = (float3)(x, y, z);
                 float3 hc = fmod3r((id + offset), fperiod);
-                float3 h = (VEXrandom_3_3(hc.x, hc.y, hc.z) - half_one) * jitter + half_one;
+                float3 h = (hash_3_3(hc) - half_one) * jitter + half_one;
                 h += offset;
 
                 float3 d = p - h;
@@ -357,7 +357,7 @@ static void pmvnoise3(float3 pos, float jitter, float* cell_value,
                 bool pass2 = dist < F2;
 
 
-                cell = pass ? VEXrandom_3_1(hc.x, hc.y, hc.z) : cell;                
+                cell = pass ? hash_3_1(hc) : cell;                
                 F2 = pass2 ? dist : F2;
                 F2 = pass ? F1 : F2;
                 F1 = pass ? dist : F1;
@@ -371,8 +371,8 @@ static void pmvnoise3(float3 pos, float jitter, float* cell_value,
 
     (*f1) = F1;
     (*f2) = F2;
-    (*p1) = pos1 / fperiod;
-    (*p2) = pos2 / fperiod;
+    (*p1) = pos1  / fperiod;
+    (*p2) = pos2  / fperiod;
     (*cell_value) = cell;
 }
 
@@ -402,7 +402,7 @@ static void pcvnoise3(float3 pos, float jitter, float* cell_value,
             {
                 float3 offset = (float3)(x, y, z);
                 float3 hc = fmod3r((id + offset), fperiod);
-                float3 h = (VEXrandom_3_3(hc.x, hc.y, hc.z) - half_one) * jitter + half_one;
+                float3 h = (hash_3_3(hc) - half_one) * jitter + half_one;
                 h += offset;
 
                 float3 d = p - h;
@@ -412,7 +412,7 @@ static void pcvnoise3(float3 pos, float jitter, float* cell_value,
                 bool pass2 = dist < F2;
 
 
-                cell = pass ? VEXrandom_3_1(hc.x, hc.y, hc.z) : cell;                
+                cell = pass ? hash_3_1(hc) : cell;                
                 F2 = pass2 ? dist : F2;
                 F2 = pass ? F1 : F2;
                 F1 = pass ? dist : F1;
@@ -426,8 +426,8 @@ static void pcvnoise3(float3 pos, float jitter, float* cell_value,
 
     (*f1) = F1;
     (*f2) = F2;
-    (*p1) = pos1 / fperiod;
-    (*p2) = pos2 / fperiod;
+    (*p1) = pos1  / fperiod;
+    (*p2) = pos2  / fperiod;
     (*cell_value) = cell;
 }
 
@@ -458,17 +458,17 @@ static void pmkvnoise3(float3 pos, float jitter, float* cell_value,
             {
                 float3 offset = (float3)(x, y, z);
                 float3 hc = fmod3r((id + offset), fperiod);
-                float3 h = (VEXrandom_3_3(hc.x, hc.y, hc.z) - half_one) * jitter + half_one;
+                float3 h = (hash_3_3(hc) - half_one) * jitter + half_one;
                 h += offset;
 
                 float3 d = p - h;
-                float dist = minkowski_dist(d, minkowski_number));
+                float dist = minkowski_dist(d, minkowski_number);
 
                 bool pass = dist < F1;
                 bool pass2 = dist < F2;
 
 
-                cell = pass ? VEXrandom_3_1(hc.x, hc.y, hc.z) : cell;                
+                cell = pass ? hash_3_1(hc) : cell;                
                 F2 = pass2 ? dist : F2;
                 F2 = pass ? F1 : F2;
                 F1 = pass ? dist : F1;
@@ -482,8 +482,8 @@ static void pmkvnoise3(float3 pos, float jitter, float* cell_value,
 
     (*f1) = F1;
     (*f2) = F2;
-    (*p1) = pos1 / fperiod;
-    (*p2) = pos2 / fperiod;
+    (*p1) = pos1  / fperiod;
+    (*p2) = pos2  / fperiod;
     (*cell_value) = cell;
 }
 
