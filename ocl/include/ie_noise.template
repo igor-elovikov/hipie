@@ -21,45 +21,115 @@ static float minkowski_dist(float3 p, float mp)
     return pow(pow(ap.x, mp) + pow(ap.y, mp) + pow(ap.z, mp), 1.0f / mp);
 }
 
-// hash wrappers
-
-static float3 hash_3_3(float3 v)
+static float manhattan_dist2(float2 p)
 {
-    return VEXrandom_3_3(v.x, v.y, v.z);
+    float2 ap = fabs(p);
+    return ap.x + ap.y;
 }
 
-static float4 hash_3_4(float3 v) 
+static float chebyshev_dist2(float2 p)
 {
-    return VEXrandom_3_4(v.x, v.y, v.z);
+    float2 ap = fabs(p);
+    return fmax(ap.x, ap.y);
 }
 
-static float hash_3_1(float3 v)
+static float minkowski_dist2(float2 p, float mp)
 {
-    return VEXrandom_3_1(v.x, v.y, v.z);
+    float2 ap = fabs(p);
+    return pow(pow(ap.x, mp) + pow(ap.y, mp), 1.0f / mp);
 }
 
-// zero-centered hashes
+// hash wrappers (+ zero centered)
 
-static float3 zchash_3_3(float3 v)
+:: set signature = ["v", "v.x, v.y", "v.x, v.y, v.z", "v.x, v.y, v.z, v.w"]
+:: set type = ["float", "float2", "float3", "float4"]
+
+:: for from in range(1, 5)
+:: for to in range(1, 5)
+static {{ type[to-1] }} hash_{{ from }}_{{ to }}({{ type[from-1] }} v)
 {
-    return VEXrandom_3_3(v.x, v.y, v.z) * 2.f - 1.f;
+    return VEXrandom_{{ from }}_{{ to }}({{ signature[from-1] }});
 }
 
-static float4 zchash_3_4(float3 v)
+static {{ type[to-1] }} zchash_{{ from }}_{{ to }}({{ type[from-1] }} v)
 {
-    return VEXrandom_3_4(v.x, v.y, v.z) * 2.f - 1.f;
+    return VEXrandom_{{ from }}_{{ to }}({{ signature[from-1] }}) * 2.f - 1.f;
 }
-
-static float zchash_3_1(float3 v)
-{
-    return VEXrandom_3_1(v.x, v.y, v.z) * 2.f - 1.f;
-}
+:: endfor
+:: endfor
 
 :: set dist_func = ["length", "manhattan_dist", "chebyshev_dist", "minkowski_dist"]
+:: set dist_func2 = ["length", "manhattan_dist2", "chebyshev_dist2", "minkowski_dist2"]
 :: set func_prefix = ["", "m", "c", "mk"]
 
 // Voronoi Noise
 
+// 2d
+:: for period in range(2)
+:: for i in range(4)
+static void {{"p" if period == 1}}{{ func_prefix[i] }}vnoise2(float2 pos, float jitter, float* cell_value, 
+    float* f1, float* f2, float2* p1, float2* p2{% if period == 1 %},
+    int2 period{% endif %}{% if i == 3 %},
+    float minkowski_number{% endif %}
+    )
+{
+:: if period == 1
+    float2 fperiod = convert_float2(period);
+    pos *= fperiod;
+:: endif
+
+    float2 id;
+    float2 p = fract(pos, &id);
+
+    float F1 = 1000.f;
+    float F2 = 1000.f;
+    float cell; 
+
+    float2 pos1, pos2;
+
+    const float2 half_one = (float2)(0.5f);
+    
+    for (int x = -1; x < 2; x++)
+    {
+        for (int y = -1; y < 2; y++)
+        {
+                float2 offset = (float2)(x, y);
+:: if period == 1
+                float2 hc = fmod2r((id + offset), fperiod);
+:: else
+                float2 hc = id + offset;
+:: endif
+                float2 h = (hash_2_2(hc) - half_one) * jitter + half_one;
+                h += offset;
+
+                float2 d = p - h;
+                float dist = {{ dist_func2[i] }}(d{% if i == 3 %}, minkowski_number{% endif %});
+
+                bool pass = dist < F1;
+                bool pass2 = dist < F2;
+
+
+                cell = pass ? hash_2_1(hc) : cell;                
+                F2 = pass2 ? dist : F2;
+                F2 = pass ? F1 : F2;
+                F1 = pass ? dist : F1;
+                pos2 = pass2 ? hc : pos2;
+                pos2 = pass ? pos1 : pos2;
+                pos1 = pass ? hc : pos1;
+        }
+    }
+
+    (*f1) = F1;
+    (*f2) = F2;
+    (*p1) = pos1 {{" / fperiod" if period == 1 }};
+    (*p2) = pos2 {{" / fperiod" if period == 1 }};
+    (*cell_value) = cell;
+}
+
+:: endfor
+:: endfor
+
+// 3d
 :: for period in range(2)
 :: for i in range(4)
 static void {{"p" if period == 1}}{{ func_prefix[i] }}vnoise3(float3 pos, float jitter, float* cell_value, 
@@ -129,7 +199,154 @@ static void {{"p" if period == 1}}{{ func_prefix[i] }}vnoise3(float3 pos, float 
 :: endfor
 :: endfor
 
+// Smooth Voronoi Noise
+
+// 2d
+:: for period in range(2)
+:: for i in range(4)
+static float {{"p" if period == 1}}{{ func_prefix[i] }}svnoise2(float2 pos, float jitter, float falloff{% if period == 1 %},
+    int2 period{% endif %}{% if i == 3 %},
+    float minkowski_number{% endif %}
+    )
+{
+:: if period == 1
+    float2 fperiod = convert_float2(period);
+    pos *= fperiod;
+:: endif
+
+    float2 id;
+    float2 p = fract(pos, &id);
+
+    const float2 half_one = (float2)(0.5f);
+
+    float res = 0.f;
+    
+    for (int x = -1; x < 2; x++)
+    {
+        for (int y = -1; y < 2; y++)
+        {
+                float2 offset = (float2)(x, y);
+:: if period == 1
+                float2 hc = fmod2r((id + offset), fperiod);
+:: else
+                float2 hc = id + offset;
+:: endif
+                float2 h = (hash_2_2(hc) - half_one) * jitter + half_one;
+                h += offset;
+
+                float2 d = p - h;
+                float dist = {{ dist_func2[i] }}(d{% if i == 3 %}, minkowski_number{% endif %});
+                
+                res += exp(-falloff * dist);
+                
+        }
+    }
+
+    return -(1.f / falloff) * log(res);
+}
+
+:: endfor
+:: endfor
+
+// 3d
+:: for period in range(2)
+:: for i in range(4)
+static float {{"p" if period == 1}}{{ func_prefix[i] }}svnoise3(float3 pos, float jitter, float falloff{% if period == 1 %},
+    int3 period{% endif %}{% if i == 3 %},
+    float minkowski_number{% endif %}
+    )
+{
+:: if period == 1
+    float3 fperiod = convert_float3(period);
+    pos *= fperiod;
+:: endif
+
+    float3 id;
+    float3 p = fract(pos, &id);
+
+    const float3 half_one = (float3)(0.5f);
+    float res = 0.f;
+
+    for (int x = -1; x < 2; x++)
+    {
+        for (int y = -1; y < 2; y++)
+        {
+            for (int z = -1; z < 2; z++)
+            {
+                float3 offset = (float3)(x, y, z);
+:: if period == 1
+                float3 hc = fmod3r((id + offset), fperiod);
+:: else
+                float3 hc = id + offset;
+:: endif
+                float3 h = (hash_3_3(hc) - half_one) * jitter + half_one;
+                h += offset;
+
+                float3 d = p - h;
+                float dist = {{ dist_func[i] }}(d{% if i == 3 %}, minkowski_number{% endif %});
+
+                res += exp(-falloff * dist);
+            }
+        }
+    }
+
+    return -(1.f / falloff) * log(res);
+}
+
+:: endfor
+:: endfor
+
 // Gradient Noise
+
+// 2d
+:: for period in range(2)
+:: for gradient in range(2)
+static {{"float" if gradient == 0 else "float3"}} {{"p" if period == 1}}noise2{{"d" if gradient == 1}}(float2 pos{% if period == 1 %}, int2 period{% endif %})
+{
+ :: if period == 1
+    float2 fperiod = convert_float2(period);
+    pos *= fperiod;
+:: endif
+   
+    float2 p;
+    float2 w = fract(pos, &p);
+    
+    float2 u = w * w * w * (w * (w * 6.f - 15.f) + 10.f);
+:: if gradient == 1
+    float2 du = 30.f * w * w * (w * (w - 2.f) + 1.f);
+:: endif
+    
+    float2 ga = zchash_2_2({{"fmod2r(" if period == 1}}p + (float2)(0.f, 0.f){{", fperiod)" if period == 1}});
+    float2 gb = zchash_2_2({{"fmod2r(" if period == 1}}p + (float2)(1.f, 0.f){{", fperiod)" if period == 1}});
+    float2 gc = zchash_2_2({{"fmod2r(" if period == 1}}p + (float2)(0.f, 1.f){{", fperiod)" if period == 1}});
+    float2 gd = zchash_2_2({{"fmod2r(" if period == 1}}p + (float2)(1.f, 1.f){{", fperiod)" if period == 1}});
+    
+    float va = dot(ga, w - (float2)(0.f, 0.f));
+    float vb = dot(gb, w - (float2)(1.f, 0.f));
+    float vc = dot(gc, w - (float2)(0.f, 1.f));
+    float vd = dot(gd, w - (float2)(1.f, 1.f));
+	
+    float nv = va + 
+           u.x * (vb - va) + 
+           u.y * (vc - va) + 
+           u.x * u.y * (va - vb - vc + vd);
+
+:: if gradient == 0
+    return nv;
+:: else
+    float2 d = ga + 
+             u.x * (gb - ga) + 
+             u.y * (gc - ga) + 
+             u.x * u.y * (ga - gb - gc + gd) + 
+             du * (u.yx * (va - vb - vc + vd) + (float2)(vb, vc) - va);
+
+    return (float3)(nv, d);
+:: endif
+}
+:: endfor
+:: endfor
+
+// 3d
 :: for period in range(2)
 :: for gradient in range(2)
 static {{"float" if gradient == 0 else "float4"}} {{"p" if period == 1}}noise3{{"d" if gradient == 1}}(float3 pos{% if period == 1 %}, int3 period{% endif %})
@@ -197,11 +414,60 @@ static {{"float" if gradient == 0 else "float4"}} {{"p" if period == 1}}noise3{{
 :: endfor
 
 // Voronoise
-static float voronoise(float3 pos, float u, float v )
+
+// 2d
+:: for period in range(2)
+:: for i in range(4)
+static float {{"p" if period == 1}}{{ func_prefix[i] }}voronoise2(float2 pos, 
+    float u, float v{% if period == 1 %},
+    int2 period{% endif %}{% if i == 3 %},
+    float minkowski_number{% endif %} )
 {
+:: if period == 1
+    float2 fperiod = convert_float2(period);
+    pos *= fperiod;
+:: endif
+
+    float2 p;
+    float2 f = fract(pos, &p);
+
+    float k = 1.0 + 63.0*pow(1.0-v,4.0);
+    float va = 0.0;
+    float wt = 0.0;
+
+    for( int x=-2; x<=2; x++ )
+        for( int y=-2; y<=2; y++ )
+        {
+            float2  g = (float2)(x, y);
+            float3  o = hash_2_3({{"fmod2r(" if period == 1}} p + g {{", fperiod)" if period == 1}})*(float3)(u,u,1.0);
+            float2  r = g - f + o.xy;
+            float d = {{ dist_func2[i] }}(r{% if i == 3 %}, minkowski_number{% endif %});
+            float w = pow( 1.f - smoothstep(0.f, 1.414f, d), k );
+            va += w*o.z;
+            wt += w;
+        }
+
+    return va/wt;
+}
+:: endfor
+:: endfor
+
+
+// 3d
+:: for period in range(2)
+:: for i in range(4)
+static float {{"p" if period == 1}}{{ func_prefix[i] }}voronoise3(float3 pos, 
+    float u, float v{% if period == 1 %},
+    int3 period{% endif %}{% if i == 3 %},
+    float minkowski_number{% endif %} )
+{
+:: if period == 1
+    float3 fperiod = convert_float3(period);
+    pos *= fperiod;
+:: endif
+
     float3 p;
     float3 f = fract(pos, &p);
-
 
     float k = 1.0 + 63.0*pow(1.0-v,4.0);
     float va = 0.0;
@@ -211,16 +477,18 @@ static float voronoise(float3 pos, float u, float v )
         for( int y=-2; y<=2; y++ )
             for( int z=-2; z<=2; z++ )
             {
-                float3  g = (float3)(x, y,z );
-                float4  o = zchash_3_4( p + g )*(float4)(u,u,u,1.0);
+                float3  g = (float3)(x, y, z);
+                float4  o = hash_3_4({{"fmod3r(" if period == 1}} p + g {{", fperiod)" if period == 1}})*(float4)(u,u,u,1.0);
                 float3  r = g - f + o.xyz;
-                float d = dot(r,r);
-                float w = pow( 1.f - smoothstep(0.f, 1.732f, sqrt(d)), k );
+                float d = {{ dist_func[i] }}(r{% if i == 3 %}, minkowski_number{% endif %});
+                float w = pow( 1.f - smoothstep(0.f, 1.732f, d), k );
                 va += w*o.w;
                 wt += w;
             }
 
     return va/wt;
 }
+:: endfor
+:: endfor
 
 #endif
