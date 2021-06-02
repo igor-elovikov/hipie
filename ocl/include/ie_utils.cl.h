@@ -8,17 +8,17 @@
 
 static float3 fmod3r(float3 lhs, float3 rhs)
 {
-    return lhs - floor(lhs / rhs);  
+    return lhs - rhs * floor(lhs / rhs);  
 }
 
 static float2 fmod2r(float2 lhs, float2 rhs)
 {
-    return lhs - floor(lhs / rhs); 
+    return lhs - rhs * floor(lhs / rhs); 
 }
 
 static float fmodr(float lhs, float rhs)
 {
-    return lhs - floor(lhs / rhs); 
+    return lhs - rhs * floor(lhs / rhs); 
 }
 
 static int imodr(int lhs, int rhs)

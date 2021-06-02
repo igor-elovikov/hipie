@@ -488,13 +488,12 @@ static void pmkvnoise3(float3 pos, float jitter, float* cell_value,
 }
 
 // Gradient Noise
-static float gnoise(float3 pos)
+static float noise3(float3 pos)
 {
     float3 p;
     float3 w = fract(pos, &p);
     
     float3 u = w * w * w * (w * (w * 6.f - 15.f) + 10.f);
-    
     float3 ga = hash_3_3(p + (float3)(0.f, 0.f, 0.f)) * 2.f - 1.f;
     float3 gb = hash_3_3(p + (float3)(1.f, 0.f, 0.f)) * 2.f - 1.f;
     float3 gc = hash_3_3(p + (float3)(0.f, 1.f, 0.f)) * 2.f - 1.f;
@@ -513,7 +512,7 @@ static float gnoise(float3 pos)
     float vg = dot(gg, w - (float3)(0.f, 1.f, 1.f));
     float vh = dot(gh, w - (float3)(1.f, 1.f, 1.f));
 	
-    return va + 
+    float nv = va + 
            u.x * (vb - va) + 
            u.y * (vc - va) + 
            u.z * (ve - va) + 
@@ -521,8 +520,144 @@ static float gnoise(float3 pos)
            u.y * u.z * (va - vc - ve + vg) + 
            u.z * u.x * (va - vb - ve + vf) + 
            u.x * u.y * u.z * (-va + vb + vc - vd + ve - vf - vg + vh);
+    return nv;
 }
+static float4 noise3d(float3 pos)
+{
+    float3 p;
+    float3 w = fract(pos, &p);
+    
+    float3 u = w * w * w * (w * (w * 6.f - 15.f) + 10.f);
+    float3 du = 30.f * w * w * (w * (w - 2.f) + 1.f);
+    float3 ga = hash_3_3(p + (float3)(0.f, 0.f, 0.f)) * 2.f - 1.f;
+    float3 gb = hash_3_3(p + (float3)(1.f, 0.f, 0.f)) * 2.f - 1.f;
+    float3 gc = hash_3_3(p + (float3)(0.f, 1.f, 0.f)) * 2.f - 1.f;
+    float3 gd = hash_3_3(p + (float3)(1.f, 1.f, 0.f)) * 2.f - 1.f;
+    float3 ge = hash_3_3(p + (float3)(0.f, 0.f, 1.f)) * 2.f - 1.f;
+    float3 gf = hash_3_3(p + (float3)(1.f, 0.f, 1.f)) * 2.f - 1.f;
+    float3 gg = hash_3_3(p + (float3)(0.f, 1.f, 1.f)) * 2.f - 1.f;
+    float3 gh = hash_3_3(p + (float3)(1.f, 1.f, 1.f)) * 2.f - 1.f;
+    
+    float va = dot(ga, w - (float3)(0.f, 0.f, 0.f));
+    float vb = dot(gb, w - (float3)(1.f, 0.f, 0.f));
+    float vc = dot(gc, w - (float3)(0.f, 1.f, 0.f));
+    float vd = dot(gd, w - (float3)(1.f, 1.f, 0.f));
+    float ve = dot(ge, w - (float3)(0.f, 0.f, 1.f));
+    float vf = dot(gf, w - (float3)(1.f, 0.f, 1.f));
+    float vg = dot(gg, w - (float3)(0.f, 1.f, 1.f));
+    float vh = dot(gh, w - (float3)(1.f, 1.f, 1.f));
+	
+    float nv = va + 
+           u.x * (vb - va) + 
+           u.y * (vc - va) + 
+           u.z * (ve - va) + 
+           u.x * u.y * (va - vb - vc + vd) + 
+           u.y * u.z * (va - vc - ve + vg) + 
+           u.z * u.x * (va - vb - ve + vf) + 
+           u.x * u.y * u.z * (-va + vb + vc - vd + ve - vf - vg + vh);
+    float3 d = ga + 
+             u.x * (gb - ga) + 
+             u.y * (gc - ga) + 
+             u.z * (ge - ga) + 
+             u.x * u.y * (ga - gb - gc + gd) + 
+             u.y * u.z * (ga - gc - ge + gg) + 
+             u.z * u.x * (ga - gb - ge + gf) + 
+             u.x * u.y * u.z * (-ga + gb + gc - gd + ge - gf - gg + gh) +   
+             
+             du * ((float3)(vb - va, vc - va, ve - va) + 
+                   u.yzx * (float3)(va - vb - vc + vd, va - vc - ve + vg, va - vb - ve + vf) + 
+                   u.zxy * (float3)(va - vb - ve + vf, va - vb - vc + vd, va - vc - ve + vg) + 
+                   u.yzx * u.zxy*(-va + vb + vc - vd + ve - vf - vg + vh) );
 
+    return (float4)(nv, d);
+}
+static float pnoise3(float3 pos, int3 period)
+{
+    float3 fperiod = convert_float3(period);
+    pos *= fperiod;
+    float3 p;
+    float3 w = fract(pos, &p);
+    
+    float3 u = w * w * w * (w * (w * 6.f - 15.f) + 10.f);
+    float3 ga = hash_3_3(fmod3r(p + (float3)(0.f, 0.f, 0.f), fperiod)) * 2.f - 1.f;
+    float3 gb = hash_3_3(fmod3r(p + (float3)(1.f, 0.f, 0.f), fperiod)) * 2.f - 1.f;
+    float3 gc = hash_3_3(fmod3r(p + (float3)(0.f, 1.f, 0.f), fperiod)) * 2.f - 1.f;
+    float3 gd = hash_3_3(fmod3r(p + (float3)(1.f, 1.f, 0.f), fperiod)) * 2.f - 1.f;
+    float3 ge = hash_3_3(fmod3r(p + (float3)(0.f, 0.f, 1.f), fperiod)) * 2.f - 1.f;
+    float3 gf = hash_3_3(fmod3r(p + (float3)(1.f, 0.f, 1.f), fperiod)) * 2.f - 1.f;
+    float3 gg = hash_3_3(fmod3r(p + (float3)(0.f, 1.f, 1.f), fperiod)) * 2.f - 1.f;
+    float3 gh = hash_3_3(fmod3r(p + (float3)(1.f, 1.f, 1.f), fperiod)) * 2.f - 1.f;
+    
+    float va = dot(ga, w - (float3)(0.f, 0.f, 0.f));
+    float vb = dot(gb, w - (float3)(1.f, 0.f, 0.f));
+    float vc = dot(gc, w - (float3)(0.f, 1.f, 0.f));
+    float vd = dot(gd, w - (float3)(1.f, 1.f, 0.f));
+    float ve = dot(ge, w - (float3)(0.f, 0.f, 1.f));
+    float vf = dot(gf, w - (float3)(1.f, 0.f, 1.f));
+    float vg = dot(gg, w - (float3)(0.f, 1.f, 1.f));
+    float vh = dot(gh, w - (float3)(1.f, 1.f, 1.f));
+	
+    float nv = va + 
+           u.x * (vb - va) + 
+           u.y * (vc - va) + 
+           u.z * (ve - va) + 
+           u.x * u.y * (va - vb - vc + vd) + 
+           u.y * u.z * (va - vc - ve + vg) + 
+           u.z * u.x * (va - vb - ve + vf) + 
+           u.x * u.y * u.z * (-va + vb + vc - vd + ve - vf - vg + vh);
+    return nv;
+}
+static float4 pnoise3d(float3 pos, int3 period)
+{
+    float3 fperiod = convert_float3(period);
+    pos *= fperiod;
+    float3 p;
+    float3 w = fract(pos, &p);
+    
+    float3 u = w * w * w * (w * (w * 6.f - 15.f) + 10.f);
+    float3 du = 30.f * w * w * (w * (w - 2.f) + 1.f);
+    float3 ga = hash_3_3(fmod3r(p + (float3)(0.f, 0.f, 0.f), fperiod)) * 2.f - 1.f;
+    float3 gb = hash_3_3(fmod3r(p + (float3)(1.f, 0.f, 0.f), fperiod)) * 2.f - 1.f;
+    float3 gc = hash_3_3(fmod3r(p + (float3)(0.f, 1.f, 0.f), fperiod)) * 2.f - 1.f;
+    float3 gd = hash_3_3(fmod3r(p + (float3)(1.f, 1.f, 0.f), fperiod)) * 2.f - 1.f;
+    float3 ge = hash_3_3(fmod3r(p + (float3)(0.f, 0.f, 1.f), fperiod)) * 2.f - 1.f;
+    float3 gf = hash_3_3(fmod3r(p + (float3)(1.f, 0.f, 1.f), fperiod)) * 2.f - 1.f;
+    float3 gg = hash_3_3(fmod3r(p + (float3)(0.f, 1.f, 1.f), fperiod)) * 2.f - 1.f;
+    float3 gh = hash_3_3(fmod3r(p + (float3)(1.f, 1.f, 1.f), fperiod)) * 2.f - 1.f;
+    
+    float va = dot(ga, w - (float3)(0.f, 0.f, 0.f));
+    float vb = dot(gb, w - (float3)(1.f, 0.f, 0.f));
+    float vc = dot(gc, w - (float3)(0.f, 1.f, 0.f));
+    float vd = dot(gd, w - (float3)(1.f, 1.f, 0.f));
+    float ve = dot(ge, w - (float3)(0.f, 0.f, 1.f));
+    float vf = dot(gf, w - (float3)(1.f, 0.f, 1.f));
+    float vg = dot(gg, w - (float3)(0.f, 1.f, 1.f));
+    float vh = dot(gh, w - (float3)(1.f, 1.f, 1.f));
+	
+    float nv = va + 
+           u.x * (vb - va) + 
+           u.y * (vc - va) + 
+           u.z * (ve - va) + 
+           u.x * u.y * (va - vb - vc + vd) + 
+           u.y * u.z * (va - vc - ve + vg) + 
+           u.z * u.x * (va - vb - ve + vf) + 
+           u.x * u.y * u.z * (-va + vb + vc - vd + ve - vf - vg + vh);
+    float3 d = ga + 
+             u.x * (gb - ga) + 
+             u.y * (gc - ga) + 
+             u.z * (ge - ga) + 
+             u.x * u.y * (ga - gb - gc + gd) + 
+             u.y * u.z * (ga - gc - ge + gg) + 
+             u.z * u.x * (ga - gb - ge + gf) + 
+             u.x * u.y * u.z * (-ga + gb + gc - gd + ge - gf - gg + gh) +   
+             
+             du * ((float3)(vb - va, vc - va, ve - va) + 
+                   u.yzx * (float3)(va - vb - vc + vd, va - vc - ve + vg, va - vb - ve + vf) + 
+                   u.zxy * (float3)(va - vb - ve + vf, va - vb - vc + vd, va - vc - ve + vg) + 
+                   u.yzx * u.zxy*(-va + vb + vc - vd + ve - vf - vg + vh) );
+
+    return (float4)(nv, d);
+}
 // Voronoise
 static float voronoise(float3 pos, float u, float v )
 {
@@ -539,10 +674,10 @@ static float voronoise(float3 pos, float u, float v )
             for( int z=-2; z<=2; z++ )
             {
                 float3  g = (float3)(x, y,z );
-                float4  o = zchash_3_4( p + g )*(float4)(u,u,u,1.0);
+                float4  o = hash_3_4( p + g )*(float4)(u,u,u,1.0);
                 float3  r = g - f + o.xyz;
-                float d = dot(r,r);
-                float w = pow( 1.f - smoothstep(0.f, 1.732f, sqrt(d)), k );
+                float d = length(r);
+                float w = pow( 1.f - smoothstep(0.f, 1.732f, d), k );
                 va += w*o.w;
                 wt += w;
             }
