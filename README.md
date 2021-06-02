@@ -1,5 +1,7 @@
 # Houdini Tools
 
+Compatible only with Python 3 builds
+
 ## IE|Pen Tool
 ![Pen Tool](https://github.com/igor-elovikov/hipie/blob/main/help/images/tentacle.png)
 
