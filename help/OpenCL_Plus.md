@@ -2,6 +2,8 @@
 
 OpenCL SOP wrapper to simplify writing kernels.
 
+![Title](images/opencl_title.png)
+
 The main goal - you don't have to ever touch *Generate Kernel* button to write your code.
 
 Features:
@@ -33,12 +35,26 @@ This binding resolved at compile-time based on input. Parser tries to find data 
 #bind density{voxelsize, xformtoworld}
 ```
 
-#### Worksets
+### Manual binding
+
+Best for embedding
+
+```
+#bindattr name{[work], class=(point|primitive|vertex|detail), type=(int|float|intarray|floatarray), size=typesize, [options...]}
+#bindvolume name{[work], rank=(scalar|vector), [options...]}
+#bindvdb name{[options...]}
+```
+
+Essentially this is the same as OpenCL SOP binding, it's just promoted to text form as a directive.
+
+With this one you have to specify what exactly you want to bind. Then the actual binding name will be promoted as a parameter.
+
+### Worksets
 `#work` specifies data to _Run Over_ in OpenCL SOP terms. You don't have to care about declaration order, parser will put the work data as the first writeable binding. Also `#work P` is just a shortcut for `#bind P{work}`.
 
 For custom worksets use `#worksets worksets_begin, worksets_length` where *worksets_begin* and *worksets_length* are detail attributes names with workset data (refer to OpenCL SOP manual for more information)
 
-#### Options
+### Options
 
 **General**
 
@@ -63,19 +79,7 @@ For custom worksets use `#worksets worksets_begin, worksets_length` where *works
 
 *Note:* Force alignment will be disabled if any additional information about volume is included or volume is bound as an image
 
-### Manual binding
-
-Best for embedding
-
-```
-#bindattr name{[work], class=(point|primitive|vertex|detail), type=(int|float|intarray|floatarray), size=typesize, [options...]}
-#bindvolume name{[work], rank=(scalar|vector), [options...]}
-#bindvdb name{[options...]}
-```
-
-Essentially this is the same as OpenCL SOP binding, it's just promoted to text form as a directive.
-
-With this one you have to specify what exactly you want to bind. Then the actual binding name will be promoted as a parameter. 
+ 
 
 ## Parameters
 
@@ -165,6 +169,31 @@ float [p][m|c|mk]voronoise3(float3 pos, float u, float v, [int3 period], [float 
 
 *Note*: All periodic noises are automatically downscaled to normalized range
 
+## Utilities
+
+Utility macros and functions available in snippets
+
+```c
+// Bilinear sampling from image with normalized position
+float bsample(name, float2 position)
+
+// Bilinear sampling from vector image with normalized position
+float3 bsamplev(name, float2 position)
+
+// Nearest neighbor sampling from image with normalized position
+float nsample(name, float2 position)
+
+// Nearest neighbor sampling from vector image with normalized position
+float3 nsamplev(name, float2 position)
+
+// Sampling from image by index
+float isample(name, int2 index)
+
+// Bilinear sampling from vector image with normalized position
+float3 isamplev(name, int2 index)
+```
+
+*Note*: Currently images are working only in repeated addressing (like tileable textures)
 
 ## Jinja
 ## HDA Embedding
