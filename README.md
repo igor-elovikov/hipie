@@ -1,9 +1,17 @@
 # Houdini Tools
 
+Compatible only with Python 3 builds
+
 ## IE|Pen Tool
 ![Pen Tool](https://github.com/igor-elovikov/hipie/blob/main/help/images/tentacle.png)
 
 Draw bezier curves as in other DCCs
+
+## OpenCL+
+![OpenCL+](help/images/opencl_title.png)
+
+OpenCL SOP wrapper to automate most of the boilerplate work.
+More info: [OpenCL+ Readme](help/OpenCL_Plus.md)
 
 ## Gradient Picker
 
