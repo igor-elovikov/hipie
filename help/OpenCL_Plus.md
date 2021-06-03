@@ -121,7 +121,7 @@ Similar to VEX in snippet you have access to couple of *system* variables
 
 ## Noises
 
-In `ie_noise.cl.h` you can find additional noises. Most of them are ports of Inigo Quilez awesome work: https://www.iquilezles.org/
+In `hipie/noise.h` you can find additional noises. Most of them are ports of Inigo Quilez awesome work: https://www.iquilezles.org/
 
 All distance based noises have variants with Manhattan, Chebyshev and Minkowski metrics.
 
