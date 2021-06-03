@@ -16,6 +16,11 @@ Hold Shift for picking raw color without gamma corrections (2.2 Gamma adjusted b
 
 Also works as a color picker from screen for color parms
 
+## OpenCL+
+![OpenCL+](help/images/opencl_title.png)
+OpenCL SOP wrapper to automate most of the boilerplate work.
+More info: [OpenCL+ Readme](help/OpenCL_Plus.md)
+
 ## Ramp Sketch
 
 ![Ramp Sketch](https://github.com/igor-elovikov/hipie/blob/main/help/images/ramp_sketch.gif)
