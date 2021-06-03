@@ -216,7 +216,7 @@ void volumestore3(float3 value, int index, name)
 float vdb_sample(name, float3 pos)
 
 // Sample vector VDB at position
-float vdb_samplev(name, float3 pos)
+float3 vdb_samplev(name, float3 pos)
 
 // Bilinear sampling from image with normalized position
 float bsample(name, float2 position)
