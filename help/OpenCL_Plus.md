@@ -120,9 +120,13 @@ For example:
 **Voronoi noise**
 ```c
 // 2D
-void [p][m|c|mk]vnoise2(float2 pos, float jitter, float* cell_value, float* f1, float* f2, float2* p1, float2* p2, [int2 period], [float minkowski_number])
+void [p][m|c|mk]vnoise2(float2 pos, float jitter, 
+    float* cell_value, float* f1, float* f2, float2* p1, float2* p2, 
+    [int2 period], [float minkowski_number])
 // 3D
-void [p][m|c|mk]vnoise3(float3 pos, float jitter, float* cell_value, float* f1, float* f2, float3* p1, float3* p2, [int3 period], [float minkowski_number])
+void [p][m|c|mk]vnoise3(float3 pos, float jitter, 
+    float* cell_value, float* f1, float* f2, float3* p1, float3* p2, 
+    [int3 period], [float minkowski_number])
 ```
 
 **Smooth voronoi noise**: https://www.iquilezles.org/www/articles/smoothvoronoi/smoothvoronoi.htm
