@@ -15,6 +15,16 @@ Features:
 - More noises
 - Jinja as an optional preprocessor
 
+## Before You Start
+
+The best overview of OpenCL SOP: https://vimeo.com/241568199
+
+The very first advice actually still stands. You're most likely don't need to use OpenCL. 
+
+However with this wrapper playing with OpenCL is a little bit more fun. Just don't expect magical performance gain over the VEX, especially if you're not crunching millions of points.
+
+I think the most practical scenario is solvers and any algorithms where you can chain several OpenCL SOPs into compiled block. This wrapper contains only one OpenCL SOP node and just gives you a high-level control over it. So it's perfectly safe to put it into compiled block and expect no copying to the host.
+
 ## Inputs Binding
 There are two types of bindings supported: auto and manual. 
 
@@ -171,9 +181,27 @@ float [p][m|c|mk]voronoise3(float3 pos, float u, float v, [int3 period], [float 
 
 ## Utilities
 
-Utility macros and functions available in snippets
+Utility macros and functions available in snippets.
 
 ```c
+// Evaluate ramp at position
+float ramp(name, float pos)
+
+// Evaluate vector ramp at position
+float3 rampv(name, float pos)
+
+// Equivalent of vload3 for vector volumes
+float3 volumeload3(int index, name)
+
+// Equivalent of vstore3 for vector volumes
+void volumestore3(float3 value, int index, name)
+
+// Sample scalar VDB at position
+float vdb_sample(name, float3 pos)
+
+// Sample vector VDB at position
+float vdb_samplev(name, float3 pos)
+
 // Bilinear sampling from image with normalized position
 float bsample(name, float2 position)
 
@@ -196,6 +224,28 @@ float3 isamplev(name, int2 index)
 *Note*: Currently images are working only in repeated addressing (like tileable textures)
 
 ## Jinja
-## HDA Embedding
+
+You can use Jinja template engine: https://jinja.palletsprojects.com/ for metaprogramming.
+
+Please refer to Jinja example in `examples/opencl_plus_examples.hip` to see how you can utilize Jinja and python environment to generate convolution kernel. 
+
+## HDA Embedding and promoting snippet
+
+For better UX most of the edits are currently automated, i.e. snippet recompiled as soon as you make some changes (except rewiring, where you're probably have to recompile manually). 
+
+However that won't work if you want to embed asset into another HDA and want to have more control over the snippet code. If you really want to do that you have to promote all the parameters to the HDA level (refer to Attribute Paint Masterclass: https://vimeo.com/375839266 from 53:45).
+
+When you promote all the parameters you'll lose all callbacks (so you won't be able to compile snippet). Also as SOPs callback would still refer to the original OpenCL+ SOP node any attempt to recompile snippet will break the permission and won't work on a locked node.
+
+To fix that you have to turn on *Manual Compilation* parameter and put this to your *Recompile Snippet* button callback:
+```python
+kwargs["node"].node("PATH_TO_SOP_INSIDE_HDA").hm().on_snippet_changed(kwargs["node"], True)
+```
+*Note*: This callback has to be on the HDAs level button
+
+With this trick you can embed this SOP to HDA without marking it as an editable node. The only thing that you'll have to manually compile the snippet after changes by hitting *Recompile Snippet* button.
+
+*Tip*: You can still use editable nodes and just ignore all the above. Also for options and compile-time branching you can utilize preprocessor conditionals, OpenCL SOP even supports detail attribute for compiler options (meaning that you can easily gives it preprocessor definitions).
+
 ## Limitations
 Currently only 32-bit precision is fully supported
