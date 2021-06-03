@@ -1,5 +1,19 @@
 # OpenCL+
 
+  - [Before You Start](#before-you-start)
+  - [Inputs Binding](#inputs-binding)
+    - [Auto binding](#auto-binding)
+    - [Manual binding](#manual-binding)
+    - [Worksets](#worksets)
+    - [Options](#options)
+  - [Parameters](#parameters)
+  - [System Variables](#system-variables)
+  - [Noises](#noises)
+  - [Utilities](#utilities)
+  - [Jinja](#jinja)
+  - [HDA Embedding and promoting snippet](#hda-embedding-and-promoting-snippet)
+  - [Limitations](#limitations)
+
 OpenCL SOP wrapper to simplify writing kernels.
 
 ![Title](images/opencl_title.png)
