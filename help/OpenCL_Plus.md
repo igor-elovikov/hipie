@@ -25,6 +25,8 @@ However with this wrapper playing with OpenCL is a little bit more fun. Just don
 
 I think the most practical scenario is solvers and any algorithms where you can chain several OpenCL SOPs into compiled block. This wrapper contains only one OpenCL SOP node and just gives you a high-level control over it. So it's perfectly safe to put it into compiled block and expect no copying to the host.
 
+For examples check `examples/opencl_plus_examples.hip` 
+
 ## Inputs Binding
 There are two types of bindings supported: auto and manual. 
 
