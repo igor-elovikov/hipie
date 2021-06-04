@@ -1,6 +1,14 @@
-# Houdini Tools
+# Houdini Tools  <!-- omit in toc --> 
 
 Compatible only with Python 3 builds
+
+- [Pen Tool](#pen-tool)
+- [OpenCL+](#opencl)
+- [SOP Subnetwork Verbifier](#sop-subnetwork-verbifier)
+- [Gradient Picker](#gradient-picker)
+- [Ramp Sketch](#ramp-sketch)
+- [Parametric Ramps](#parametric-ramps)
+
 
 ## Pen Tool
 ![Pen Tool](help/images/tentacle.png)
