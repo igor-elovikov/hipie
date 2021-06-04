@@ -11,6 +11,6 @@ The Verbifier will generate a function with arguments accordingly to the promote
 
 Hit *Rebuild* button to rebuild function source.
 
-*Note*: Currently it passes tuples as an individual components 
+*Note*: Currently it passes tuples to function as an individual components 
 
   
