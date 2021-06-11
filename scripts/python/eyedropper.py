@@ -34,7 +34,7 @@ def is_color_parm(parms):
     parm_template = parm.parmTemplate() # type: hou.ParmTemplate
 
     if (parm_template.type() == hou.parmTemplateType.Float and
-            parm_template.numComponents() == 3 and
+            (parm_template.numComponents() == 3 or parm_template.numComponents() == 4) and
             parm_template.namingScheme() == hou.parmNamingScheme.RGBA):
         return True
     
@@ -345,6 +345,10 @@ class ScreenshotView(QGraphicsView):
             out_color = hou.qt.fromQColor(self.picked_color)[0].rgb()
             if not self.disable_gamma_correction:
                 out_color = np.power(out_color, 2.2)
+
+            if isinstance(self.parm, hou.ParmTuple) and len(self.parm) == 4:
+                alpha = self.parm[3].eval()
+                out_color = np.append(out_color, alpha)
 
             self.parm.set(out_color)
 
