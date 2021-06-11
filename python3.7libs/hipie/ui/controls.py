@@ -1,12 +1,4 @@
-"""
-State:          Ie::states sandbox
-State type:     ie::states_sandbox
-Description:    Ie::states sandbox
-Author:         elovikov
-Date Created:   March 02, 2021 - 12:30:58
-"""
-
-# Usage: Simple state to test viewer handles.
+# Generic Point Controls State
 
 from __future__ import annotations
 
@@ -310,6 +302,7 @@ class PointControlGroup(object):
 
     def get_construction_point(self, ui_event, force_update=False):
         # type (hou.UIEvent) -> hou.Vector3
+        print("".join(traceback.format_stack()))
 
         if self.cached_construction_point is not None and not force_update:
             return self.cached_construction_point
@@ -571,6 +564,7 @@ class PointHandle:
                 old_position = control.position
                 new_position = hou.Vector3(value)
                 control.move_to(new_position)
+                self.state.point_controls.plane_point = new_position
                 self.state.on_control_moved(control, new_position, old_position)
 
         self.on_update(parms, self.new_values, self.old_values)
@@ -586,8 +580,13 @@ class PointGadget(object):
         self.on_drag = lambda gadget, ui_event: None
         self.on_end_drag = lambda gadget, ui_event: None
 
+        self.enabled = True
+
     def on_mouse_event(self, ui_event):
         # type: (hou.UIEvent) -> None
+        if not self.enabled:
+            return
+
         reason = ui_event.reason()
 
         if reason == hou.uiEventReason.Start:
@@ -595,8 +594,6 @@ class PointGadget(object):
 
         elif reason in [hou.uiEventReason.Active, hou.uiEventReason.Changed]:
             self.on_drag(self, ui_event)
-            if reason == hou.uiEventReason.Changed:
-                self.on_end_drag(self, ui_event)
 
     def set_params(self, params):
         self.gadget.setParams(params)
@@ -793,6 +790,7 @@ class PointControlsState(object):
         self.box_transform_positions: list[hou.Vector3] = []
 
         self.edit_transaction = False
+        self.is_editing_by_handle = False
 
         self.allow_multiselection = True
         self.allow_box_selection = True
@@ -827,6 +825,7 @@ class PointControlsState(object):
         self.scene_viewer.beginStateUndo(f"{self.state_label}: Modify controls")
 
     def end_edit(self):
+        self.log("End edit transaction")
         self.edit_transaction = False
         self.scene_viewer.endStateUndo()
 
@@ -1152,6 +1151,7 @@ class PointControlsState(object):
 
     def load_from_stash(self):
         self.log("Load controls from stash")
+        self.log_traceback()
 
         self.point_controls.clear_controls()
 
@@ -1324,9 +1324,11 @@ class PointControlsState(object):
             control.move_to(box_center + self.box_transform_positions[index] * transform)
 
     def onBeginHandleToState(self, kwargs):
+        self.is_editing_by_handle = True
         self.begin_edit()
         
     def onEndHandleToState(self, kwargs):
+        self.is_editing_by_handle = False
         self.end_edit()
 
 
@@ -1401,13 +1403,17 @@ class PointControlsState(object):
 
         gadget_name = self.state_context.gadget()
 
-        if gadget_name in self.point_gadgets:
+        if gadget_name in self.point_gadgets and self.point_gadgets[gadget_name].enabled:
             self.point_gadgets[gadget_name].on_mouse_event(ui_event)
             if reason == hou.uiEventReason.Start:
+                self.log(f"EventStart for Gadget {gadget_name}")
                 self.dragging_gadget = self.point_gadgets[gadget_name]
             if reason == hou.uiEventReason.Located and self.located_gadget is None:
                 self.located_gadget = self.point_gadgets[gadget_name]
                 self.on_gadget_located(self.located_gadget, True)
+            if reason == hou.uiEventReason.Changed and self.dragging_gadget is not None:
+                self.dragging_gadget.on_end_drag(self.dragging_gadget, ui_event)
+                self.dragging_gadget = None
 
             return True
 
@@ -1429,7 +1435,7 @@ class PointControlsState(object):
 
         if reason == hou.uiEventReason.Changed:
             self.on_mouse_up(ui_event)
-            if self.dragging_gadget is not None:
+            if self.dragging_gadget is not None and self.dragging_gadget.enabled:
                 self.dragging_gadget.on_end_drag(self.dragging_gadget, ui_event)
                 self.dragging_gadget = None
 
