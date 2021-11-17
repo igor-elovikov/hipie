@@ -3063,7 +3063,7 @@ class State(object):
 
         version = hou.applicationVersion()
 
-        if version[0] == 18 and version[1] == 5:
+        if (version[0] == 18 and version[1] == 5) or version[0] >= 19:
             callback_parms = ["point_handles", "box_handle", "display_values", "display_names", "controls",
                 "use_curve_guide", "use_arrow_heads", "update_geo_on_edit", "current_attribute", "drawing_mode", 
                 "handles_snapping", "display_tags", "use_surface"] + self.DISPLAY_SETTINGS_PARMS
