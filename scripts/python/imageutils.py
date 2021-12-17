@@ -1,19 +1,17 @@
+from __future__ import annotations
 import hou
 
-def is_vector_name(name):
-    # type: (str) -> bool
+def is_vector_name(name: str) -> bool:
     return name.endswith(".x") or name.endswith(".y") or name.endswith(".z")
 
-def all_components_exist(name, volume_names):
-    # type: (str, list[str]) -> bool
+def all_components_exist(name: str, volume_names: list[str]) -> bool:
     name_x = name + ".x"
     name_y = name + ".y"
     name_z = name + ".z"
     return name_x in volume_names and name_y in volume_names and name_z in volume_names
 
-def get_geo_volumes(geo):
-    # type: (hou.Geometry) -> Dict[str, hou.Volume]
-    name_attrib = geo.findPrimAttrib("name")
+def get_geo_volumes(geo: hou.Geometry) -> dict[str, hou.Volume]:
+    name_attrib: hou.Attrib = geo.findPrimAttrib("name")
     if name_attrib is not None and geo is not None:
         return {name: volume for name, volume in ((v.attribValue(name_attrib), v) 
                         for v in geo.globPrims("@intrinsic:typeid==20"))}
@@ -30,9 +28,7 @@ def get_vector_volumes(volumes):
 
     return vector_volumes
                     
-def first_vector_volume(node, input_index=0):
-    # type: (hou.SopNode) -> str
-
+def first_vector_volume(node: hou.SopNode, input_index: int=0) -> str:
     node_input = node.input(input_index) # type: hou.SopNode
 
     if node_input is not None:
@@ -48,16 +44,12 @@ def first_vector_volume(node, input_index=0):
     
     return ""
 
-
-
-def generate_image_menu(node, input_index=0):
-    # type: (hou.SopNode) -> List[str]
-
-    node_input = node.input(input_index) # type: hou.SopNode
+def generate_image_menu(node: hou.SopNode, input_index: int=0) -> list[str]:
+    node_input: hou.SopNode = node.input(input_index) 
     
     if node_input is not None:
 
-        input_geo = node_input.geometry() # type: hou.Geometry
+        input_geo: hou.Geometry = node_input.geometry()
         input_volumes = get_geo_volumes(input_geo)
 
         if input_volumes:
@@ -90,9 +82,8 @@ def generate_image_menu(node, input_index=0):
 
     return []
                 
-def generate_group_from_name(node, name, input_index=0):
-    # type: (hou.SopNode) -> str
-    node_input = node.input(input_index) # type: hou.SopNode
+def generate_group_from_name(node: hou.SopNode, name: str, input_index: int=0):
+    node_input: hou.SopNode = node.input(input_index)
     
     if node_input is not None:
 
@@ -111,8 +102,7 @@ def generate_group_from_name(node, name, input_index=0):
     
     return ""
 
-def prim_from_name(node, name, input_index=0):
-    # type: (hou.SopNode) -> int
+def prim_from_name(node: hou.SopNode, name: str, input_index: int=0) -> int:
     node_input = node.input(input_index) # type: hou.SopNode
     
     if node_input is not None:
