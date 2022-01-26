@@ -193,7 +193,7 @@ def fill_parms_from_json(node: hou.Node):
     names = get_multiparm_instances(parms_multiparm, "graph_parm_name{}")
 
     for parm in parms:
-        if parm[0] not in names and parm[0] != "$outputsize":
+        if parm[0] not in names and parm[0] not in ("$outputsize", "$randomseed"):
             last_index = parms_multiparm.eval()
             parms_multiparm.insertMultiParmInstance(last_index)
             parm_name: str = parm[0]
@@ -253,7 +253,6 @@ def get_outputs_commandline(node: hou.Node) -> list[str]:
     inputs_multiparm: hou.Parm = node.parm("graph_outputs")
 
     outputs: list[SBSAROutput] = get_multiparm_namedtuples(inputs_multiparm, SBSAROutput)
-    print(outputs)
     result = []
 
     for o in outputs:
@@ -337,7 +336,7 @@ def get_settings_commandline(node: hou.Node):
 
         icc_path = node.evalParm("icc_profiles_path")
         if icc_path.strip():
-            result += ["--icc-profiles-path", icc_path]
+            result += ["--icc-profiles-dir", icc_path]
 
     return result
 
@@ -397,7 +396,7 @@ def run_sbsrender(node: hou.Node):
     else:
         cl += ["--set-value", f"$outputsize@{size_x},{size_y}"]
 
-    if node.evalParm("use_random_seed"):
+    if node.evalParm("use_randomseed"):
         cl += ["--set-value", f"$randomseed@{node.evalParm('random_seed')}"]
 
     cl += get_parms_commandline(node)
@@ -405,7 +404,7 @@ def run_sbsrender(node: hou.Node):
     if node.parm("use_preset").eval():
         cl += ["--use-preset", node.parm("preset").evalAsString()]
 
-    print(cl)
+    #print(cl)
 
     startupinfo = subprocess.STARTUPINFO()
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -414,4 +413,18 @@ def run_sbsrender(node: hou.Node):
     if (result.returncode != 0):
         message = result.stderr.decode("utf-8")
         _error(message, hou.NodeError)
+    elif node.evalParm("pdg_logoutput"):
+        result_json = result.stdout.decode("utf-8")
+        result = json.loads(result_json)
+
+        for graph in result:
+            if "outputs" not in graph:
+                continue
+
+            for output in graph["outputs"]:
+                if "value" not in output:
+                    continue
+
+                print(f"OUTPUT_FILE:{output['value']};")
+
 
