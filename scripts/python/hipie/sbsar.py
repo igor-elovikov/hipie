@@ -9,8 +9,6 @@ import os
 import itertools as it
 import hou
 
-sbsrender_path = R"C:\Program Files\Adobe\Adobe Substance 3D Designer\sbsrender.exe"
-
 inputs_regex = re.compile(r"^\s*[ \t]*INPUT[ \t]+([$\w]+)[ \t]+(\w+)", re.MULTILINE)
 outputs_regex = re.compile(r"^\s*[ \t]*OUTPUT[ \t]+([$\w]+)", re.MULTILINE)
 presets_regex = re.compile(r"^\s*[ \t]*PRESET[ \t]+([^\n\r]+)", re.MULTILINE)
@@ -94,7 +92,7 @@ def get_multiparm_namedtuples(multiparm: hou.Parm, tuple_class: Type) -> list[tu
 def menu_from_list(l: list[str]):
     return [i for item in l for i in it.repeat(item, 2)] 
 
-def get_sbsar_info(sbsar_path: str) -> str:
+def get_sbsar_info(sbsrender_path: str, sbsar_path: str) -> str:
     startupinfo = subprocess.STARTUPINFO()
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
     result = subprocess.run([sbsrender_path, "info", sbsar_path], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
@@ -159,7 +157,7 @@ def cache_sbsar_json(node: hou.Node, sbsar_json: str):
 
 def refresh_sbsar_cache(node: hou.Node):
     sbsar_path = node.parm("sbsar").evalAsString()
-    sbsar_info = get_sbsar_info(sbsar_path)
+    sbsar_info = get_sbsar_info(node.evalParm("sbsrender_path"), sbsar_path)
     sbsar_json = get_sbsar_json(sbsar_info)
     cache_sbsar_json(node, sbsar_json)
 
@@ -359,7 +357,7 @@ def get_time_commandline(node: hou.Node):
 def run_sbsrender(node: hou.Node):
     sbsar_json = load_sbsar_json(node)
 
-    cl = [sbsrender_path]
+    cl = [node.evalParm("sbsrender_path")]
     cl += ["render"]
     cl += [node.parm("sbsar").evalAsString()]
 

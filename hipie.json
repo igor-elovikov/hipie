@@ -4,6 +4,9 @@
     "env": [
         {
             "HIPIE": "== PATH TO PACKAGE GOES HERE  =="
+        },
+        {
+            "HIPIE_SBSRENDERPATH": "== PATH TO sbsrender.exe GOES HERE (for SBSARRender ROP) For example Windows Default: C:/Program Files/Adobe/Adobe Substance 3D Designer/sbsrender.exe =="
         }
     ]
 }
