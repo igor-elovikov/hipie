@@ -302,7 +302,6 @@ class PointControlGroup(object):
 
     def get_construction_point(self, ui_event, force_update=False):
         # type (hou.UIEvent) -> hou.Vector3
-        print("".join(traceback.format_stack()))
 
         if self.cached_construction_point is not None and not force_update:
             return self.cached_construction_point
@@ -1151,7 +1150,6 @@ class PointControlsState(object):
 
     def load_from_stash(self):
         self.log("Load controls from stash")
-        self.log_traceback()
 
         self.point_controls.clear_controls()
 
@@ -1261,6 +1259,10 @@ class PointControlsState(object):
                     self.box_selection.start_selection(BoxSelection.Mode.SUBTRACT_FROM_SELECTION, viewport, mouse_pos)
             else:
                 self.point_controls.clear_selection()
+                self.on_empty_click(ui_event)
+
+    def on_empty_click(self, ui_event: hou.UIEvent):
+        pass
 
     def disable_dragging(self):
         self.point_controls.dragging = False
