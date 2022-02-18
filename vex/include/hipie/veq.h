@@ -300,6 +300,7 @@ struct veq
         return this;
     }
 
+    // TODO: Store explicit pattern if possible instead of expanding it every time
     function veq filter(string pattern)
     {
         int query_size = len(elems);
