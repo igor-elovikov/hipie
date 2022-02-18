@@ -44,6 +44,7 @@ function type[] vertices_attribs(int geo; int vertices[]; string attrib_name) \
 //
 
 
+DEF_POINTS_ATTRIBS(int)
 DEF_POINTS_ATTRIBS(float)
 DEF_POINTS_ATTRIBS(vector)
 DEF_POINTS_ATTRIBS(vector2)
@@ -51,6 +52,7 @@ DEF_POINTS_ATTRIBS(vector4)
 DEF_POINTS_ATTRIBS(string)
 DEF_POINTS_ATTRIBS(dict)
 
+DEF_PRIMS_ATTRIBS(int)
 DEF_PRIMS_ATTRIBS(float)
 DEF_PRIMS_ATTRIBS(vector)
 DEF_PRIMS_ATTRIBS(vector2)
@@ -58,6 +60,7 @@ DEF_PRIMS_ATTRIBS(vector4)
 DEF_PRIMS_ATTRIBS(string)
 DEF_PRIMS_ATTRIBS(dict)
 
+DEF_VERTICES_ATTRIBS(int)
 DEF_VERTICES_ATTRIBS(float)
 DEF_VERTICES_ATTRIBS(vector)
 DEF_VERTICES_ATTRIBS(vector2)

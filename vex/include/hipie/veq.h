@@ -317,6 +317,7 @@ struct veq
     \
 
 DEF_SELECT(float)
+DEF_SELECT(int)
 DEF_SELECT(vector)
 DEF_SELECT(vector2)
 DEF_SELECT(vector4)
