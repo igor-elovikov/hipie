@@ -346,6 +346,46 @@ struct veq
         return q;
     }
 
+    function veq remove()
+    {
+        if (query_type == QUERY_POINTS)
+        {
+            foreach (int pt; elems) removepoint(geo_idx, pt, 0);
+        }
+
+        if (query_type == QUERY_PRIMS)
+        {
+            foreach (int p; elems) removeprim(geo_idx, p, 0);
+        }
+
+        if (query_type == QUERY_VERTS)
+        {
+            foreach (int v; elems) removevertex(geo_idx, v);
+        }
+
+        return this;
+    }
+
+    function veq removewithassociated()
+    {
+        if (query_type == QUERY_POINTS)
+        {
+            foreach (int pt; elems) removepoint(geo_idx, pt, 1);
+        }
+
+        if (query_type == QUERY_PRIMS)
+        {
+            foreach (int p; elems) removeprim(geo_idx, p, 1);
+        }
+
+        if (query_type == QUERY_VERTS)
+        {
+            foreach (int v; elems) removevertex(geo_idx, v);
+        }
+
+        return this;
+    }
+
     function int[] elements()
     {
         return elems;
