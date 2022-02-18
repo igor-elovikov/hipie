@@ -47,6 +47,61 @@ struct veq
         return q;
     }
 
+    function veq points(int num)
+    {
+        veq q;
+        q.query_type = QUERY_POINTS;
+        q.geo_idx = geo_idx;
+        q.elems = array(num);
+        return q;
+    }
+
+    function veq prims(int num)
+    {
+        veq q;
+        q.query_type = QUERY_PRIMS;
+        q.geo_idx = geo_idx;
+        q.elems = array(num);
+        return q;
+    }
+
+    function veq vertices(int num)
+    {
+        veq q;
+        q.query_type = QUERY_VERTS;
+        q.geo_idx = geo_idx;
+        q.elems = array(num);
+        return q;
+    }
+
+    function veq points(int num[])
+    {
+        veq q;
+        q.query_type = QUERY_POINTS;
+        q.geo_idx = geo_idx;
+        q.elems = num;
+        return q;
+    }
+
+    function veq prims(int num[])
+    {
+        veq q;
+        q.query_type = QUERY_PRIMS;
+        q.geo_idx = geo_idx;
+        q.elems = num;
+        return q;
+    }
+
+    function veq vertices(int num[])
+    {
+        veq q;
+        q.query_type = QUERY_VERTS;
+        q.geo_idx = geo_idx;
+        q.elems = num;
+        return q;
+    }
+
+
     function veq topoints()
     {
         if (query_type == QUERY_POINTS)
