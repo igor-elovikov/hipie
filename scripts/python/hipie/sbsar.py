@@ -404,6 +404,8 @@ def run_sbsrender(node: hou.Node):
 
     #print(cl)
 
+#    with hou.InterruptableOperation(f"Rendering SBSAR: {node.parm('sbsar').evalAsString()}", open_interrupt_dialog=True):
+
     startupinfo = subprocess.STARTUPINFO()
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
     result = subprocess.run(cl, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
