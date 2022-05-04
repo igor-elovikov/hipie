@@ -1,0 +1,110 @@
+#ifndef __ie_svnoise_h
+#define __ie_svnoise_h
+
+#include "hash_impl.h"
+// Smooth Voronoi Noise
+
+:: set signature = ["v", "v.x, v.y", "v.x, v.y, v.z", "v.x, v.y, v.z, v.w"]
+:: set type = ["float", "float2", "float3", "float4"]
+:: set fmod_func = ["fmodr", "fmod2r", "fmod3r", "fmod4r"]
+:: set dist_func = ["length", "manhattan_dist", "chebyshev_dist", "minkowski_dist"]
+:: set dist_func2 = ["length", "manhattan_dist2", "chebyshev_dist2", "minkowski_dist2"]
+:: set func_prefix = ["", "m", "c", "mk"]
+
+
+// 2d
+:: for period in range(2)
+:: for i in range(4)
+static float {{"p" if period == 1}}{{ func_prefix[i] }}svnoise2(float seed, float2 pos, float jitter, float falloff{% if period == 1 %},
+    int2 period{% endif %}{% if i == 3 %},
+    float minkowski_number{% endif %}
+    )
+{
+:: if period == 1
+    float2 fperiod = convert_float2(period);
+    pos *= fperiod;
+:: endif
+
+    float2 id;
+    float2 p = fract(pos, &id);
+
+    const float2 half_one = (float2)(.5f);
+
+    float res = 0.f;
+    
+    for (int x = -2; x < 3; x++)
+    {
+        for (int y = -2; y < 3; y++)
+        {
+                float2 offset = (float2)(x, y);
+:: if period == 1
+                float2 hc = fmod2r((id + offset), fperiod);
+:: else
+                float2 hc = id + offset;
+:: endif
+                float2 h = zchash_2_2(seed, hc) * jitter * .5f;
+                h += offset;
+
+                float2 d = p - h;
+                float dist = {{ dist_func2[i] }}(d{% if i == 3 %}, minkowski_number{% endif %});
+                
+                res += exp(-falloff * dist);
+                
+        }
+    }
+
+    return -(1.f / falloff) * log(res);
+}
+
+:: endfor
+:: endfor
+
+// 3d
+:: for period in range(2)
+:: for i in range(4)
+static float {{"p" if period == 1}}{{ func_prefix[i] }}svnoise3(float seed, float3 pos, float jitter, float falloff{% if period == 1 %},
+    int3 period{% endif %}{% if i == 3 %},
+    float minkowski_number{% endif %}
+    )
+{
+:: if period == 1
+    float3 fperiod = convert_float3(period);
+    pos *= fperiod;
+:: endif
+
+    float3 id;
+    float3 p = fract(pos, &id);
+
+    const float3 half_one = (float3)(.5f);
+    float res = 0.f;
+
+    for (int x = -1; x < 2; x++)
+    {
+        for (int y = -1; y < 2; y++)
+        {
+            for (int z = -1; z < 2; z++)
+            {
+                float3 offset = (float3)(x, y, z);
+:: if period == 1
+                float3 hc = fmod3r((id + offset), fperiod);
+:: else
+                float3 hc = id + offset;
+:: endif
+                float3 h = zchash_3_3(seed, hc) * jitter * .5f;
+                h += offset;
+
+                float3 d = p - h;
+                float dist = {{ dist_func[i] }}(d{% if i == 3 %}, minkowski_number{% endif %});
+
+                res += exp(-falloff * dist);
+            }
+        }
+    }
+
+    return -(1.f / falloff) * log(res);
+}
+
+:: endfor
+:: endfor
+
+#endif

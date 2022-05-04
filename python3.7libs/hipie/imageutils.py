@@ -29,11 +29,13 @@ def get_vector_volumes(volumes):
     return vector_volumes
                     
 def first_vector_volume(node: hou.SopNode, input_index: int=0) -> str:
-    node_input = node.input(input_index) # type: hou.SopNode
+    if node is None:
+        return ""
 
-    if node_input is not None:
+    input_geo: hou.Geometry = node.inputGeometry(input_index)
 
-        input_geo = node_input.geometry() # type: hou.Geometry
+    if input_geo is not None:
+
         input_volumes = get_geo_volumes(input_geo)
 
         if input_volumes:
@@ -42,6 +44,24 @@ def first_vector_volume(node: hou.SopNode, input_index: int=0) -> str:
             if vector_volumes:
                 return vector_volumes[0]
     
+    return ""
+
+def first_grayscale_volume(node: hou.SopNode, input_index: int = 0) -> str:
+    if node is None:
+        return ""
+
+    input_geo: hou.Geometry = node.inputGeometry(input_index)
+
+    if input_geo is not None:
+        
+        input_volumes = get_geo_volumes(input_geo)
+
+        if input_volumes:
+
+            vector_volumes = get_vector_volumes(input_volumes)
+
+            return next((vname for vname in input_volumes if not is_vector_name(vname) and vname not in vector_volumes), "")
+
     return ""
 
 def generate_image_menu(node: hou.SopNode, input_index: int=0) -> list[str]:

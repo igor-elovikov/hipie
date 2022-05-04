@@ -1,0 +1,39 @@
+#ifndef __ie_hash_h
+#define __ie_hash_h
+
+#include "random.h"
+
+// hash wrappers (+ zero centered and periodic hashes)
+
+:: set signature = ["v", "v.x, v.y", "v.x, v.y, v.z", "v.x, v.y, v.z, v.w"]
+:: set type = ["float", "float2", "float3", "float4"]
+:: set fmod_func = ["fmodr", "fmod2r", "fmod3r", "fmod4r"]
+
+:: for from in range(1, 5)
+:: for to in range(1, 5)
+
+static {{ type[to-1] }} hash_{{ from }}_{{ to }}(float seed, {{ type[from-1] }} v)
+{
+    v += VEXrandom_1_{{ from }}(seed) * 5000000.f;
+    return VEXrandom_{{ from }}_{{ to }}({{ signature[from-1] }});
+}
+
+static {{ type[to-1] }} phash_{{ from }}_{{ to }}(float seed, {{ type[from-1] }} v, {{ type[from-1] }} period)
+{
+    return hash_{{ from }}_{{ to }}(seed, {{ fmod_func[from-1] }}(v, period));
+}
+
+static {{ type[to-1] }} zchash_{{ from }}_{{ to }}(float seed, {{ type[from-1] }} v)
+{
+    return hash_{{ from }}_{{ to }}(seed, v) * 2.f - 1.f;
+}
+
+static {{ type[to-1] }} pzchash_{{ from }}_{{ to }}(float seed, {{ type[from-1] }} v, {{ type[from-1] }} period)
+{
+    return zchash_{{ from }}_{{ to }}(seed, {{ fmod_func[from-1] }}(v, period));
+}
+
+:: endfor
+:: endfor
+
+#endif

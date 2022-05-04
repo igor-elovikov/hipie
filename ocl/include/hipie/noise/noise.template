@@ -1,0 +1,133 @@
+#ifndef __ie_noise_h
+#define __ie_noise_h
+
+#include "hash_impl.h"
+
+
+:: set signature = ["v", "v.x, v.y", "v.x, v.y, v.z", "v.x, v.y, v.z, v.w"]
+:: set type = ["float", "float2", "float3", "float4"]
+:: set fmod_func = ["fmodr", "fmod2r", "fmod3r", "fmod4r"]
+:: set dist_func = ["length", "manhattan_dist", "chebyshev_dist", "minkowski_dist"]
+:: set dist_func2 = ["length", "manhattan_dist2", "chebyshev_dist2", "minkowski_dist2"]
+:: set func_prefix = ["", "m", "c", "mk"]
+
+// Gradient Noise
+
+// 2d
+:: for period in range(2)
+:: for gradient in range(2)
+static {{"float" if gradient == 0 else "float3"}} {{"p" if period == 1}}noise2{{"d" if gradient == 1}}(float seed, float2 pos{% if period == 1 %}, int2 period{% endif %})
+{
+ :: if period == 1
+    float2 fperiod = convert_float2(period);
+    pos *= fperiod;
+:: endif
+   
+    float2 p;
+    float2 w = fract(pos, &p);
+    
+    float2 u = w * w * w * (w * (w * 6.f - 15.f) + 10.f);
+:: if gradient == 1
+    float2 du = 30.f * w * w * (w * (w - 2.f) + 1.f);
+:: endif
+    
+    float2 ga = zchash_2_2(seed, {{"fmod2r(" if period == 1}}p + (float2)(0.f, 0.f){{", fperiod)" if period == 1}});
+    float2 gb = zchash_2_2(seed, {{"fmod2r(" if period == 1}}p + (float2)(1.f, 0.f){{", fperiod)" if period == 1}});
+    float2 gc = zchash_2_2(seed, {{"fmod2r(" if period == 1}}p + (float2)(0.f, 1.f){{", fperiod)" if period == 1}});
+    float2 gd = zchash_2_2(seed, {{"fmod2r(" if period == 1}}p + (float2)(1.f, 1.f){{", fperiod)" if period == 1}});
+    
+    float va = dot(ga, w - (float2)(0.f, 0.f));
+    float vb = dot(gb, w - (float2)(1.f, 0.f));
+    float vc = dot(gc, w - (float2)(0.f, 1.f));
+    float vd = dot(gd, w - (float2)(1.f, 1.f));
+	
+    float nv = va + 
+           u.x * (vb - va) + 
+           u.y * (vc - va) + 
+           u.x * u.y * (va - vb - vc + vd);
+
+:: if gradient == 0
+    return nv;
+:: else
+    float2 d = ga + 
+             u.x * (gb - ga) + 
+             u.y * (gc - ga) + 
+             u.x * u.y * (ga - gb - gc + gd) + 
+             du * (u.yx * (va - vb - vc + vd) + (float2)(vb, vc) - va);
+
+    return (float3)(nv, d);
+:: endif
+}
+:: endfor
+:: endfor
+
+// 3d
+:: for period in range(2)
+:: for gradient in range(2)
+static {{"float" if gradient == 0 else "float4"}} {{"p" if period == 1}}noise3{{"d" if gradient == 1}}(float seed, float3 pos{% if period == 1 %}, int3 period{% endif %})
+{
+ :: if period == 1
+    float3 fperiod = convert_float3(period);
+    pos *= fperiod;
+:: endif
+   
+    float3 p;
+    float3 w = fract(pos, &p);
+    
+    float3 u = w * w * w * (w * (w * 6.f - 15.f) + 10.f);
+:: if gradient == 1
+    float3 du = 30.f * w * w * (w * (w - 2.f) + 1.f);
+:: endif
+    
+    float3 ga = zchash_3_3(seed, {{"fmod3r(" if period == 1}}p + (float3)(0.f, 0.f, 0.f){{", fperiod)" if period == 1}});
+    float3 gb = zchash_3_3(seed, {{"fmod3r(" if period == 1}}p + (float3)(1.f, 0.f, 0.f){{", fperiod)" if period == 1}});
+    float3 gc = zchash_3_3(seed, {{"fmod3r(" if period == 1}}p + (float3)(0.f, 1.f, 0.f){{", fperiod)" if period == 1}});
+    float3 gd = zchash_3_3(seed, {{"fmod3r(" if period == 1}}p + (float3)(1.f, 1.f, 0.f){{", fperiod)" if period == 1}});
+    float3 ge = zchash_3_3(seed, {{"fmod3r(" if period == 1}}p + (float3)(0.f, 0.f, 1.f){{", fperiod)" if period == 1}});
+    float3 gf = zchash_3_3(seed, {{"fmod3r(" if period == 1}}p + (float3)(1.f, 0.f, 1.f){{", fperiod)" if period == 1}});
+    float3 gg = zchash_3_3(seed, {{"fmod3r(" if period == 1}}p + (float3)(0.f, 1.f, 1.f){{", fperiod)" if period == 1}});
+    float3 gh = zchash_3_3(seed, {{"fmod3r(" if period == 1}}p + (float3)(1.f, 1.f, 1.f){{", fperiod)" if period == 1}});
+    
+    float va = dot(ga, w - (float3)(0.f, 0.f, 0.f));
+    float vb = dot(gb, w - (float3)(1.f, 0.f, 0.f));
+    float vc = dot(gc, w - (float3)(0.f, 1.f, 0.f));
+    float vd = dot(gd, w - (float3)(1.f, 1.f, 0.f));
+    float ve = dot(ge, w - (float3)(0.f, 0.f, 1.f));
+    float vf = dot(gf, w - (float3)(1.f, 0.f, 1.f));
+    float vg = dot(gg, w - (float3)(0.f, 1.f, 1.f));
+    float vh = dot(gh, w - (float3)(1.f, 1.f, 1.f));
+	
+    float nv = va + 
+           u.x * (vb - va) + 
+           u.y * (vc - va) + 
+           u.z * (ve - va) + 
+           u.x * u.y * (va - vb - vc + vd) + 
+           u.y * u.z * (va - vc - ve + vg) + 
+           u.z * u.x * (va - vb - ve + vf) + 
+           u.x * u.y * u.z * (-va + vb + vc - vd + ve - vf - vg + vh);
+:: if gradient == 0
+    return nv;
+:: else
+    float3 d = ga + 
+             u.x * (gb - ga) + 
+             u.y * (gc - ga) + 
+             u.z * (ge - ga) + 
+             u.x * u.y * (ga - gb - gc + gd) + 
+             u.y * u.z * (ga - gc - ge + gg) + 
+             u.z * u.x * (ga - gb - ge + gf) + 
+             u.x * u.y * u.z * (-ga + gb + gc - gd + ge - gf - gg + gh) +   
+             
+             du * ((float3)(vb - va, vc - va, ve - va) + 
+                   u.yzx * (float3)(va - vb - vc + vd, va - vc - ve + vg, va - vb - ve + vf) + 
+                   u.zxy * (float3)(va - vb - ve + vf, va - vb - vc + vd, va - vc - ve + vg) + 
+                   u.yzx * u.zxy*(-va + vb + vc - vd + ve - vf - vg + vh) );
+
+    return (float4)(nv, d);
+:: endif
+}
+:: endfor
+:: endfor
+
+
+
+#endif

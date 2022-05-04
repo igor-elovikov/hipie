@@ -3,8 +3,15 @@
 
 #define INTERSECT_TOLERANCE 0.00001f
 
+#define FINT_MAX 2147483647.f
+#define FUINT_MAX 4294967295.f
 
 // modulo without negative remainder
+
+static float4 fmod4r(float4 lhs, float4 rhs)
+{
+    return lhs - rhs * floor(lhs / rhs);  
+}
 
 static float3 fmod3r(float3 lhs, float3 rhs)
 {
@@ -46,6 +53,52 @@ static int3 imod3r(int3 lhs, int3 rhs)
     );
 }
 
+static int4 imod4r(int4 lhs, int4 rhs)
+{
+    int4 mod = lhs % rhs;
+    return (int4) (
+        mod.x < 0 ? rhs.x + mod.x : mod.x,
+        mod.y < 0 ? rhs.y + mod.y : mod.y,
+        mod.z < 0 ? rhs.z + mod.z : mod.z,
+        mod.w < 0 ? rhs.w + mod.w : mod.w
+    );
+}
+
+static float manhattan_dist(float3 p)
+{
+    float3 ap = fabs(p);
+    return ap.x + ap.y + ap.z;
+}
+
+static float chebyshev_dist(float3 p)
+{
+    float3 ap = fabs(p);
+    return fmax(ap.x, fmax(ap.y, ap.z));
+}
+
+static float minkowski_dist(float3 p, float mp)
+{
+    float3 ap = fabs(p);
+    return pow(pow(ap.x, mp) + pow(ap.y, mp) + pow(ap.z, mp), 1.0f / mp);
+}
+
+static float manhattan_dist2(float2 p)
+{
+    float2 ap = fabs(p);
+    return ap.x + ap.y;
+}
+
+static float chebyshev_dist2(float2 p)
+{
+    float2 ap = fabs(p);
+    return fmax(ap.x, ap.y);
+}
+
+static float minkowski_dist2(float2 p, float mp)
+{
+    float2 ap = fabs(p);
+    return pow(pow(ap.x, mp) + pow(ap.y, mp), 1.0f / mp);
+}
 
 static bool tri_intersect(float3 ray_origin, float3 ray_direction,
                 float3 p0, float3 p1, float3 p2,

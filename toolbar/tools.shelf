@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shelfDocument>
+  <!-- This file contains definitions of shelves, toolbars, and tools.
+ It should not be hand-edited when it is being used by the application.
+ Note, that two definitions of the same element are not allowed in
+ a single file. -->
+
+  <tool name="ie_mtlx_definition_gen" label="MtlX Def Maker" icon="hicon:/SVGIcons.index?COMMON_materialx.svg">
+    <toolMenuContext name="network">
+      <contextNetType>SOP</contextNetType>
+    </toolMenuContext>
+    <script scriptType="python"><![CDATA[from __future__ import annotations
+
+import re
+import hou
+import assettools as at
+
+from hipie.mtlx.definitions import *
+
+menu_entries = at.getAllToolSubmenus("Vop")
+menu_entries: list[str] = [entry for entry in menu_entries if entry.startswith("MaterialX")]
+
+input_regex = re.compile(r"^\W+input\W+(\w+)\W+(\w+)", re.MULTILINE)
+
+vop: hou.NodeTypeCategory = hou.vopNodeTypeCategory()
+
+header = """
+
+from typing import Any
+
+class color:
+        ...
+
+class vector2:
+        ...
+
+class vector3:
+        ...
+
+class vector:
+        ...
+
+class vector4:
+        ...
+
+class colora:
+        ...
+
+class matrix3:
+        ...
+
+class matrix4:
+        ...
+
+class bsdf:
+        ...
+
+class edf:
+        ...
+
+class vdf:
+        ...
+
+class atmosphere:
+        ...
+
+class vector2a:
+        ...
+
+class surface:
+        ...
+
+class displacement:
+        ...
+
+
+"""
+
+classes = {}
+
+filename = hou.expandString("$HIPIE/python3.7libs/hipie/mtlx/definitions.pyi")
+
+for entry in menu_entries:
+    tokens = entry.split("/")
+    if len(tokens) < 2: 
+        continue
+
+    class_name = tokens[1].lower()
+    if class_name == "global":
+        class_name = "globals"
+
+    classes[class_name] = []
+
+def get_parm_pytype(p: hou.ParmTemplate) -> str:
+    dtype = p.dataType()
+    num_components = p.numComponents()
+
+    if dtype == hou.parmTemplateType.Float:
+        if num_components == 1:
+            return "float"
+        if num_components == 2:
+            return "vector2"
+        if num_components == 3:
+            if p.namingScheme() == hou.parmNamingScheme.RGBA:
+                return "color"
+            return "vector3"
+        if num_components == 4:
+            if p.namingScheme() == hou.parmNamingScheme.RGBA:
+                return "color4"
+            return "vector4"
+
+    if dtype == hou.parmTemplateType.Int:
+        if num_components == 1:
+            return "int"
+
+    if dtype == hou.parmTemplateType.String:
+        if num_components == 1:
+            return "str"
+
+    if dtype == hou.parmTemplateType.Toggle:
+        if num_components == 1:
+            return "bool"
+
+    return "Any"
+
+with open(filename, "w") as out:
+
+    out.write(header)
+
+    out.write(f"class mtlx:\n\n")
+
+    for vop_name, vop_type in vop.nodeTypes().items():
+        vop_type: hou.VopNodeType
+        if not vop_name.startswith("mtlx"):
+            continue
+
+        dialog_script = vop_type.sectionData("DialogScript")
+
+        vop_inputs = input_regex.findall(dialog_script)
+
+        vop_input_names = [i[1] for i in vop_inputs]
+        vop_inputs = [f"in_{i[1]}: {i[0]}" for i in vop_inputs]
+
+        tool: hou.Tool = hou.shelves.tool(f"vop_{vop_name}")
+        menu_location = tool.toolMenuLocations()[0]
+
+        menu_tokens = menu_location.split("/")
+
+        class_name = None
+
+        if len(menu_tokens) > 1:
+            class_name = menu_tokens[1].lower()
+            if class_name == "global":
+                class_name = "globals"
+
+
+        ptg: hou.ParmTemplateGroup = vop_type.parmTemplateGroup()
+        parms: list[hou.ParmTemplate] = ptg.parmTemplates()
+        parms_signature = []
+        for parm in parms:
+            if parm.name() in vop_input_names or "sidefx::shader_parmname" in parm.tags():
+                continue
+            parms_signature.append(f"{parm.name()}: {get_parm_pytype(parm)}")
+
+        signature = ", ".join(vop_inputs + parms_signature)
+
+        func_name = vop_name[4:]
+        if func_name == "in":
+            func_name = "merge"
+
+        func_def = f"def {func_name}({signature}):\n"
+
+        if class_name is None:
+            out.write(f"\t{func_def}\t\t...\n\n")
+        else:
+            classes[class_name].append(func_def)
+
+    
+    for class_name, class_defs in classes.items():
+
+        out.write(f"\tclass {class_name}:\n\n")
+
+        for definition in class_defs:
+            out.write(f"\t\t{definition}\t\t\t...\n\n")
+
+
+
+
+    
+
+
+
+]]></script>
+  </tool>
+</shelfDocument>
