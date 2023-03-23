@@ -390,15 +390,21 @@ class ScreensMain(QMainWindow):
                 additional_window = ScreensMain(parm, gradient_edit, ramp_sketch, self, screen)
                 self.additional_windows.append(additional_window)
 
-    def close_all(self):
-        self.close()
-        if self.parent() is not None:
-            self.parent().close()
-
+    def close_children(self):
         children = self.findChildren(ScreensMain)
         if children:
             for child in children:
                 child.close()
+
+    def close_all(self):
+        self.close()
+        parent = self.parent()
+        if parent is not None:
+            parent.close()
+            if isinstance(parent, ScreensMain):
+                parent.close_children()
+
+        self.close_children()
 
         if sys.platform == "darwin":
             global form
