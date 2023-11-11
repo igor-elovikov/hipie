@@ -17,7 +17,7 @@ Compatible only with Python 3 builds
 Draw bezier curves as in other DCCs
 
 ## OpenCL+
-**DEPRECATED. Since Houdini 2.0 OpenCL SOP introduced this changes and much more: https://www.sidefx.com/docs/houdini/vex/ocl.html**
+**DEPRECATED. Since Houdini 20.0 OpenCL SOP introduced this changes and much more: https://www.sidefx.com/docs/houdini/vex/ocl.html**
 ![OpenCL+](help/images/opencl_title.png)
 
 OpenCL SOP wrapper to automate most of the boilerplate work.
