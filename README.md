@@ -24,12 +24,12 @@ OpenCL SOP wrapper to automate most of the boilerplate work.
 More info: [OpenCL+ Readme](help/OpenCL_Plus.md)
 
 ## SOP Subnetwork Verbifier
-
+**DEPRECATED. Since Houdini 19.0 Invoke Compile Graph SOP provides much more flexible approach**
 Generate SOP Verb function from arbitrary network (considering all the nodes have verbs)
 More info: [Verbifier](help/verbifier.md)
 
 ## Gradient Picker
-
+**NOTICE: SideFX LABs has the same tool since its introduction. Though this tool has color picking function missing in LABs**
 ![Pen Tool](help/images/gradient_picker.gif)
 
 Pick gradient from screen for color ramps.
